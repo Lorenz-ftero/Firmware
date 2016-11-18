@@ -37,6 +37,7 @@
  *
  * @author Example User <mail@example.com>
  */
+//this is a test comment
 
 #include <px4_config.h>
 #include <px4_tasks.h>
