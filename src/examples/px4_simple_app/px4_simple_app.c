@@ -69,7 +69,7 @@ int px4_simple_app_main(int argc, char *argv[])
 
 	/* one could wait for multiple topics with this technique, just using one here */
 	px4_pollfd_struct_t fds[] = {
-		{ .fd = sensor_sub_fd,   .events = POLLIN },
+                { .fd = sensor_sub_fd,   .events = POLLIN },
 		/* there could be more file descriptors here, in the form like:
 		 * { .fd = other_sub_fd,   .events = POLLIN },
 		 */
@@ -121,9 +121,11 @@ int px4_simple_app_main(int argc, char *argv[])
 			 * if (fds[1..n].revents & POLLIN) {}
 			 */
 		}
-	}
+        }
 
-	PX4_INFO("exiting");
+        warnx("this is warnx"
+              );
+        PX4_INFO("exiting");
 
 	return 0;
 }

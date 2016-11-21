@@ -414,9 +414,9 @@ ToneAlarm::ToneAlarm() :
 {
 	// enable debug() calls
 	//_debug_enabled = true;
-	_default_tunes[TONE_STARTUP_TUNE] = "MFT240L8 O4aO5dc O4aO5dc O4aO5dc L16dcdcdcdc";		// startup tune
-	_default_tunes[TONE_ERROR_TUNE] = "MBT200a8a8a8PaaaP";						// ERROR tone
-	_default_tunes[TONE_NOTIFY_POSITIVE_TUNE] = "MFT200e8a8a";					// Notify Positive tone
+        _default_tunes[TONE_STARTUP_TUNE] = "MFT240L8 O4aO5dc O4aO5dc O4aO5dc L16dcdcdcdc";		// startup tune
+        _default_tunes[TONE_ERROR_TUNE] = "MBT200a8a8a8PaaaP";						// ERROR tone
+        _default_tunes[TONE_NOTIFY_POSITIVE_TUNE] = "MFT200e8a8a";					// Notify Positive tone
 	_default_tunes[TONE_NOTIFY_NEUTRAL_TUNE] = "MFT200e8e";						// Notify Neutral tone
 	_default_tunes[TONE_NOTIFY_NEGATIVE_TUNE] = "MFT200e8c8e8c8e8c8";				// Notify Negative tone
 	_default_tunes[TONE_ARMING_WARNING_TUNE] = "MNT75L1O2G";					//arming warning
@@ -428,7 +428,15 @@ ToneAlarm::ToneAlarm() :
 	_default_tunes[TONE_EKF_WARNING_TUNE] = "MFT255L8ddd#d#eeff";				// ekf warning
 	_default_tunes[TONE_BARO_WARNING_TUNE] = "MFT255L4gf#fed#d";				// baro warning
 	_default_tunes[TONE_SINGLE_BEEP_TUNE] = "MFT100a8";                             // single beep
-	_default_tunes[TONE_HOME_SET] = "MFT100L4>G#6A#6B#4";
+        _default_tunes[TONE_HOME_SET] = "MFT100L4>G#6A#6B#4";
+        _default_tunes[TONE_SUCESS]="l8o2t240d..e.p16mlagb.";//sucess
+        _default_tunes[TONE_FAILURE]="t200o3l4gcdel2fl4ecl2dp64dl4el1c";//failure
+        _default_tunes[TONE_SLITHER]="t255l15o1adcefao2defaec";//slither
+        _default_tunes[TONE_PLUNK]="t255l16o1fo4d#o2fc";//plunk
+        _default_tunes[TONE_ASCENDING_TRILL]="t255o1l15deffedo2deffedo3deffedo4deffedo5deffed";//ascending trill
+        _default_tunes[LITTLE_MATHY_GROOVES] ="t160 o3l8 g4eee4ddg4efe4.dgag4a4gab2 p4ga b4b4b4.b g4b4d4.go2b4 o3 d4 e4f4g4.ge4d4 o2b4o3d4e2.";      // little mathy groves
+        _default_tunes[FROSTY_THE_SNOW_MAN] = "t140o2p4g2e4.f8g4o3c2o2b8o3c8d4c4o2b4a8g2.o2b8o3c8d4c4o2b4a8a8g8o3c4o2e8e4g8a8g4f4e4f4g2.g2e4.f8g4o3c2o2b8o3c8d4c4o2b4a8g2.o2b8o3c8d4c4o2b4a8a8g8o3c4o2e8e4g8a8g4f4e4d4c2.c4a4a4o3c4c4o2b4a4g4e4f4a4g4f4e2.e8e8d4d4g4g4b4b4o3d4d8o2b8o3d4c4o2b4a4g4p4g2g2e4.f8g4o3c2o2b8o3c8d4c4o2b4a8g8g2.o2b8o3c8d4c4o2b4a8a8g8o3c4o2e8e4g8a8g4f4e4d4c2.p4";                    // Frosty the Snow Man
+        _default_tunes[RISING_SUN_BLUES] = "t200 o2 l4 ge2gb2 o3c+ o3d2 e8d8 o2b2.p2 b o3 e2ef8e.d o2b8o3c."; //rising sun blues
 
 	_tune_names[TONE_STARTUP_TUNE] = "startup";			// startup tune
 	_tune_names[TONE_ERROR_TUNE] = "error";				// ERROR tone
@@ -443,8 +451,16 @@ ToneAlarm::ToneAlarm() :
 	_tune_names[TONE_PARACHUTE_RELEASE_TUNE] = "parachute_release";	// parachute release
 	_tune_names[TONE_EKF_WARNING_TUNE] = "ekf_warning";				// ekf warning
 	_tune_names[TONE_BARO_WARNING_TUNE] = "baro_warning";			// baro warning
-	_tune_names[TONE_SINGLE_BEEP_TUNE] = "beep";                    // single beep
-	_tune_names[TONE_HOME_SET] = "home_set";
+        _tune_names[TONE_SINGLE_BEEP_TUNE] = "beep";                    // single beep
+        _tune_names[TONE_HOME_SET] = "home_set";
+        _tune_names[TONE_SUCESS]="sucess";//sucess
+        _tune_names[TONE_FAILURE]="failure";//failure
+        _tune_names[TONE_SLITHER]="slither";//slither
+        _tune_names[TONE_PLUNK]="plunk";//plunk
+        _tune_names[TONE_ASCENDING_TRILL]="ascending_trill";//ascending trill
+        _tune_names[LITTLE_MATHY_GROOVES] = "little_mathy_groves";                 // little mathy groves
+        _tune_names[FROSTY_THE_SNOW_MAN] = "frosty_the_snow_man";                 // Frosty the Snow Man
+        _tune_names[RISING_SUN_BLUES] = "rising_sun_blues";                        //rising sun blues
 }
 
 ToneAlarm::~ToneAlarm()
