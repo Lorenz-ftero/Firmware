@@ -37,7 +37,6 @@
  *
  * @author Example User <mail@example.com>
  */
-//this is a test comment
 
 #include <px4_config.h>
 #include <px4_tasks.h>
@@ -46,6 +45,7 @@
 #include <stdio.h>
 #include <poll.h>
 #include <string.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
@@ -123,8 +123,129 @@ int px4_simple_app_main(int argc, char *argv[])
 		}
         }
 
-        warnx("this is warnx"
-              );
+        warnx("this is warnx");
+        
+
+        struct vehicle_control_mode_s			_vcontrol_mode;
+
+        //_vcontrol_mode.flag_control_retraction_phase_enabled=true;
+
+        int _vcontrol_mode_sub = -1;
+        _vcontrol_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
+        orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
+
+
+        if(_vcontrol_mode.flag_armed){
+            PX4_INFO("vehicle is armed");
+        }else{
+            PX4_INFO("vehicle is NOT armed");
+        }
+
+        if(_vcontrol_mode.flag_control_acceleration_enabled){
+            PX4_INFO("control mode is control acceleration");
+        }else{
+            PX4_INFO("control mode is NOT control acceleration");
+        }
+
+        if(_vcontrol_mode.flag_control_altitude_enabled){
+            PX4_INFO("control mode is altitude control");
+        }else{
+            PX4_INFO("control mode is NOT altitude control");
+        }
+
+        if(_vcontrol_mode.flag_control_attitude_enabled){
+            PX4_INFO("control mode is attitude control");
+        }else{
+            PX4_INFO("control mode is NOT attitude control");
+        }
+
+        if(_vcontrol_mode.flag_control_auto_enabled){
+            PX4_INFO("control mode is auto control");
+        }else{
+            PX4_INFO("control mode is NOT auto control");
+        }
+
+        if(_vcontrol_mode.flag_control_climb_rate_enabled){
+            PX4_INFO("control mode is climb rate control");
+        }else{
+            PX4_INFO("control mode is NOT climb rate control");
+        }
+
+        if(_vcontrol_mode.flag_control_force_enabled){
+            PX4_INFO("control mode is force control");
+        }else{
+            PX4_INFO("control mode is NOT force control");
+        }
+
+        if(_vcontrol_mode.flag_control_manual_enabled){
+            PX4_INFO("control mode is manual control");
+        }else{
+            PX4_INFO("control mode is NOT manual control");
+        }
+
+        if(_vcontrol_mode.flag_control_offboard_enabled){
+            PX4_INFO("control mode is offboard control");
+        }else{
+            PX4_INFO("control mode is NOT offboard control");
+        }
+
+        if(_vcontrol_mode.flag_control_position_enabled){
+            PX4_INFO("control mode is position control");
+        }else{
+            PX4_INFO("control mode is NOT position control");
+        }
+
+        if(_vcontrol_mode.flag_control_rates_enabled){
+            PX4_INFO("control mode is rates control");
+        }else{
+            PX4_INFO("control mode is NOT rates control");
+        }
+
+        if(_vcontrol_mode.flag_control_rattitude_enabled){
+            PX4_INFO("control mode is rattitude control");
+        }else{
+            PX4_INFO("control mode is NOT rattitude control");
+        }
+
+        if(_vcontrol_mode.flag_control_termination_enabled){
+            PX4_INFO("control mode is termination control");
+        }else{
+            PX4_INFO("control mode is NOT termination control");
+        }
+
+        if(_vcontrol_mode.flag_control_velocity_enabled){
+            PX4_INFO("control mode is velocity control");
+        }else{
+            PX4_INFO("control mode is NOT velocity control");
+        }
+
+        if(_vcontrol_mode.flag_external_manual_override_ok){
+            PX4_INFO("control mode is external manual override");
+        }else{
+            PX4_INFO("control mode is NOT external manual override");
+        }
+
+        if(_vcontrol_mode.flag_system_hil_enabled){
+            PX4_INFO("control mode is hil system");
+        }else{
+            PX4_INFO("control mode is NOT hil system");
+        }
+        /*
+
+        if(_vcontrol_mode.flag_control_traction_phase_enabled){
+            PX4_INFO("control mode is tractionphase");
+        }else{
+            PX4_INFO("control mode is NOT tractionphase");
+        }
+
+        if(_vcontrol_mode.flag_control_retraction_phase_enabled){
+            PX4_INFO("control mode is retractionphase");
+        }else{
+            PX4_INFO("control mode is NOT retractionphase");
+        }
+
+        */
+
         PX4_INFO("exiting");
 
 	return 0;
