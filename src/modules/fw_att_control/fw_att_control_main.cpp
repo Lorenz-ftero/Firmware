@@ -590,7 +590,7 @@ FixedwingAttitudeControl::vehicle_control_mode_poll()
 
 	if (vcontrol_mode_updated) {
 
-		orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
+        orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
 	}
 }
 
