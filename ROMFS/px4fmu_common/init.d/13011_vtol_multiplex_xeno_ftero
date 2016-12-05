@@ -1,6 +1,6 @@
 #!nsh
 #
-# @name Caipiroshka Duo Tailsitter
+# @name Multiplex Xeno with modifications
 #
 # @type VTOL Duo Tailsitter
 #
@@ -9,7 +9,7 @@
 # @output MAIN5 elevon left
 # @output MAIN6 elevon right
 #
-# @maintainer Roman Bapst <roman@px4.io>
+# @maintainer Cla Mattia Galliard <cla@ftero.ch> Focus Project ETH Zuerich Ftero <www.ftero.ch>
 #
 
 sh /etc/init.d/rc.vtol_defaults
