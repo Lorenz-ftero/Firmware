@@ -14,8 +14,7 @@
 # @output AUX2 feed-through of RC AUX2 channel
 # @output AUX3 feed-through of RC AUX3 channel
 #
-# @maintainer Cla Mattia Galliard <cla@ftero.ch>
-# @project Focus Project ETH Zuerich Ftero <www.ftero.ch>
+# @maintainer Cla Mattia Galliard <cla@ftero.ch> Focus Project ETH Zuerich Ftero <www.ftero.ch>
 
 sh /etc/init.d/rc.fw_defaults
 
