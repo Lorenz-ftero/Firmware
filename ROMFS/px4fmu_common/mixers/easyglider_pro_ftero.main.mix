@@ -1,13 +1,13 @@
-Aileron/rudder/elevator/throttle mixer for PX4FMU
+Aileron/rudder/throttle/elevator/flaps/safetyrelease mixer for PX4FMU
 ==================================================
 
 This file defines mixers suitable for controlling a fixed wing aircraft with
-aileron, rudder, elevator and throttle controls using PX4FMU. The configuration
+aileron, rudder, throttle and elevator controls using PX4FMU. The configuration
 assumes the aileron servo(s) are connected to PX4FMU servo output 0, the
-elevator to output 1, the rudder to output 2 and the throttle to output 3.
+elevator to output 1, the throttle to output 2 and the rudder to output 3.
 
 Inputs to the mixer come from channel group 0 (vehicle attitude), channels 0
-(roll), 1 (pitch) and 3 (thrust).
+(roll), 1 (pitch), 3 (thrust), 2 (yaw) and 4 (flaps); channel group 3 channel 5 (AUX Passthrough 1)
 
 Aileron mixer
 -------------
@@ -24,7 +24,7 @@ motion using a Y  cable, the servos can be positioned reversed from one another.
 
 M: 1
 O:      10000  10000      0 -10000  10000
-S: 0 0  10000  10000      0 -10000  10000
+S: 0 0  -10000  -10000      0 -10000  10000
 
 Elevator mixer
 ------------
@@ -63,7 +63,7 @@ endpoints to suit.
 
 M: 1
 O:      10000  10000      0 -10000  10000
-S: 0 2  10000  10000      0 -10000  10000
+S: 0 2  -8000  -8000      0 -8000  8000
 
 
 Flaps mixer
