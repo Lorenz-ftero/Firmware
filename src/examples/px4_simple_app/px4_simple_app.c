@@ -45,140 +45,197 @@
 #include <stdio.h>
 #include <poll.h>
 #include <string.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
-#include <uORB/topics/vehicle_control_mode.h>
 
 __EXPORT int px4_simple_app_main(int argc, char *argv[]);
 
 int px4_simple_app_main(int argc, char *argv[])
 {
-	PX4_INFO("Hello Sky!");
+    PX4_INFO("Hello Sky!");
 
-	/* subscribe to sensor_combined topic */
-	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
-	/* limit the update rate to 5 Hz */
-	orb_set_interval(sensor_sub_fd, 200);
+    /* subscribe to sensor_combined topic */
+    int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+    /* limit the update rate to 5 Hz */
+    orb_set_interval(sensor_sub_fd, 200);
 
-	/* advertise attitude topic */
-	struct vehicle_attitude_s att;
+    /* advertise attitude topic */
+    struct vehicle_attitude_s att;
+    memset(&att, 0, sizeof(att));
+    orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
 
-    int		_vcontrol_mode_sub=-1;		/**< vehicle status subscription */
-    struct vehicle_control_mode_s			_vcontrol_mode;		/**< vehicle control mode */
-    orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
+    /* one could wait for multiple topics with this technique, just using one here */
+    px4_pollfd_struct_t fds[] = {
+                { .fd = sensor_sub_fd,   .events = POLLIN },
+        /* there could be more file descriptors here, in the form like:
+         * { .fd = other_sub_fd,   .events = POLLIN },
+         */
+    };
 
+    int error_counter = 0;
 
-	memset(&att, 0, sizeof(att));
-	orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
+    for (int i = 0; i < 5; i++) {
+        /* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
+        int poll_ret = px4_poll(fds, 1, 1000);
 
-	/* one could wait for multiple topics with this technique, just using one here */
-	px4_pollfd_struct_t fds[] = {
-		{ .fd = sensor_sub_fd,   .events = POLLIN },
-		/* there could be more file descriptors here, in the form like:
-		 * { .fd = other_sub_fd,   .events = POLLIN },
-		 */
-	};
+        /* handle the poll result */
+        if (poll_ret == 0) {
+            /* this means none of our providers is giving us data */
+            PX4_ERR("Got no data within a second");
 
-	int error_counter = 0;
+        } else if (poll_ret < 0) {
+            /* this is seriously bad - should be an emergency */
+            if (error_counter < 10 || error_counter % 50 == 0) {
+                /* use a counter to prevent flooding (and slowing us down) */
+                PX4_ERR("ERROR return value from poll(): %d", poll_ret);
+            }
 
-	for (int i = 0; i < 5; i++) {
-		/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
-		int poll_ret = px4_poll(fds, 1, 1000);
+            error_counter++;
 
-		/* handle the poll result */
-		if (poll_ret == 0) {
-			/* this means none of our providers is giving us data */
-			PX4_ERR("Got no data within a second");
+        } else {
 
-		} else if (poll_ret < 0) {
-			/* this is seriously bad - should be an emergency */
-			if (error_counter < 10 || error_counter % 50 == 0) {
-				/* use a counter to prevent flooding (and slowing us down) */
-				PX4_ERR("ERROR return value from poll(): %d", poll_ret);
-			}
+            if (fds[0].revents & POLLIN) {
+                /* obtained data for the first file descriptor */
+                struct sensor_combined_s raw;
+                /* copy sensors raw data into local buffer */
+                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f",
+                     (double)raw.accelerometer_m_s2[0],
+                     (double)raw.accelerometer_m_s2[1],
+                     (double)raw.accelerometer_m_s2[2]);
 
-			error_counter++;
+                /* set att and publish this information for other apps
+                 the following does not have any meaning, it's just an example
+                */
+                att.q[0] = raw.accelerometer_m_s2[0];
+                att.q[1] = raw.accelerometer_m_s2[1];
+                att.q[2] = raw.accelerometer_m_s2[2];
 
-		} else {
+                orb_publish(ORB_ID(vehicle_attitude), att_pub, &att);
+            }
 
-			if (fds[0].revents & POLLIN) {
-				/* obtained data for the first file descriptor */
-				struct sensor_combined_s raw;
-				/* copy sensors raw data into local buffer */
-				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-				PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f",
-					 (double)raw.accelerometer_m_s2[0],
-					 (double)raw.accelerometer_m_s2[1],
-					 (double)raw.accelerometer_m_s2[2]);
-
-				/* set att and publish this information for other apps */
-				att.roll = raw.accelerometer_m_s2[0];
-				att.pitch = raw.accelerometer_m_s2[1];
-				att.yaw = raw.accelerometer_m_s2[2];
-				orb_publish(ORB_ID(vehicle_attitude), att_pub, &att);
-			}
-
-			/* there could be more file descriptors here, in the form like:
-			 * if (fds[1..n].revents & POLLIN) {}
-			 */
-		}
-    }
-    /*
-    bool flag_control_offboard_enabled;
-    bool flag_control_rates_enabled;
-    bool flag_control_attitude_enabled;
-    bool flag_control_rattitude_enabled;
-    bool flag_control_force_enabled;
-    bool flag_control_acceleration_enabled;
-    bool flag_control_velocity_enabled;
-    bool flag_control_position_enabled;
-    bool flag_control_altitude_enabled;
-    bool flag_control_climb_rate_enabled;
-        bool flag_control_termination_enabled;
-      */
-        if(_vcontrol_mode.flag_armed)
-        {
-            PX4_INFO("flag_armed");
-        }else{
-            PX4_INFO("flag_armed");
+            /* there could be more file descriptors here, in the form like:
+             * if (fds[1..n].revents & POLLIN) {}
+             */
+        }
         }
 
-        if(_vcontrol_mode.flag_external_manual_override_ok)
-        {
-            PX4_INFO("flag_external_manual_override_ok");
+        warnx("this is warnx");
+
+
+        struct vehicle_control_mode_s			_vcontrol_mode;
+
+        //_vcontrol_mode.flag_control_retraction_phase_enabled=true;
+
+        int _vcontrol_mode_sub = -1;
+        _vcontrol_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));
+        orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
+
+
+        if(_vcontrol_mode.flag_armed){
+            PX4_INFO("vehicle is armed");
         }else{
-            PX4_INFO("not flag_external_manual_override_ok");
+            PX4_INFO("vehicle is NOT armed");
         }
 
-        if(_vcontrol_mode.flag_system_hil_enabled)
-        {
-            PX4_INFO("flag_system_hil_enabled");
+        if(_vcontrol_mode.flag_control_acceleration_enabled){
+            PX4_INFO("control mode is control acceleration");
         }else{
-            PX4_INFO("not flag_system_hil_enabled");
+            PX4_INFO("control mode is NOT control acceleration");
         }
 
-        if(_vcontrol_mode.flag_control_manual_enabled)
-        {
-            PX4_INFO("flag_control_manual_enabled");
+        if(_vcontrol_mode.flag_control_altitude_enabled){
+            PX4_INFO("control mode is altitude control");
         }else{
-            PX4_INFO("not flag_control_manual_enabled");
+            PX4_INFO("control mode is NOT altitude control");
         }
 
-        if(_vcontrol_mode.flag_control_auto_enabled)
-        {
-            PX4_INFO("flag_control_auto_enabled");
+        if(_vcontrol_mode.flag_control_attitude_enabled){
+            PX4_INFO("control mode is attitude control");
         }else{
-            PX4_INFO("not flag_control_auto_enabled");
+            PX4_INFO("control mode is NOT attitude control");
         }
 
+        if(_vcontrol_mode.flag_control_auto_enabled){
+            PX4_INFO("control mode is auto control");
+        }else{
+            PX4_INFO("control mode is NOT auto control");
+        }
+
+        if(_vcontrol_mode.flag_control_climb_rate_enabled){
+            PX4_INFO("control mode is climb rate control");
+        }else{
+            PX4_INFO("control mode is NOT climb rate control");
+        }
+
+        if(_vcontrol_mode.flag_control_force_enabled){
+            PX4_INFO("control mode is force control");
+        }else{
+            PX4_INFO("control mode is NOT force control");
+        }
+
+        if(_vcontrol_mode.flag_control_manual_enabled){
+            PX4_INFO("control mode is manual control");
+        }else{
+            PX4_INFO("control mode is NOT manual control");
+        }
+
+        if(_vcontrol_mode.flag_control_offboard_enabled){
+            PX4_INFO("control mode is offboard control");
+        }else{
+            PX4_INFO("control mode is NOT offboard control");
+        }
+
+        if(_vcontrol_mode.flag_control_position_enabled){
+            PX4_INFO("control mode is position control");
+        }else{
+            PX4_INFO("control mode is NOT position control");
+        }
+
+        if(_vcontrol_mode.flag_control_rates_enabled){
+            PX4_INFO("control mode is rates control");
+        }else{
+            PX4_INFO("control mode is NOT rates control");
+        }
+
+        if(_vcontrol_mode.flag_control_rattitude_enabled){
+            PX4_INFO("control mode is rattitude control");
+        }else{
+            PX4_INFO("control mode is NOT rattitude control");
+        }
+
+        if(_vcontrol_mode.flag_control_termination_enabled){
+            PX4_INFO("control mode is termination control");
+        }else{
+            PX4_INFO("control mode is NOT termination control");
+        }
+
+        if(_vcontrol_mode.flag_control_velocity_enabled){
+            PX4_INFO("control mode is velocity control");
+        }else{
+            PX4_INFO("control mode is NOT velocity control");
+        }
+
+        if(_vcontrol_mode.flag_external_manual_override_ok){
+            PX4_INFO("control mode is external manual override");
+        }else{
+            PX4_INFO("control mode is NOT external manual override");
+        }
+
+        if(_vcontrol_mode.flag_system_hil_enabled){
+            PX4_INFO("control mode is hil system");
+        }else{
+            PX4_INFO("control mode is NOT hil system");
+        }
         if(_vcontrol_mode.flag_control_tractionphase_enabled)
-        {
-            PX4_INFO("awesome traction phase");
-        }else{
-            PX4_INFO("not in an awesome traction phase");
-        }
+                {
+                    PX4_INFO("awesome traction phase");
+                }else{
+                    PX4_INFO("not in an awesome traction phase");
+                }
 
 
 
