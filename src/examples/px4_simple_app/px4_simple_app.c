@@ -49,6 +49,7 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_control_mode.h>
 
 __EXPORT int px4_simple_app_main(int argc, char *argv[]);
 
@@ -63,6 +64,12 @@ int px4_simple_app_main(int argc, char *argv[])
 
 	/* advertise attitude topic */
 	struct vehicle_attitude_s att;
+
+    int		_vcontrol_mode_sub=-1;		/**< vehicle status subscription */
+    struct vehicle_control_mode_s			_vcontrol_mode;		/**< vehicle control mode */
+    orb_copy(ORB_ID(vehicle_control_mode), _vcontrol_mode_sub, &_vcontrol_mode);
+
+
 	memset(&att, 0, sizeof(att));
 	orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
 
@@ -117,7 +124,64 @@ int px4_simple_app_main(int argc, char *argv[])
 			 * if (fds[1..n].revents & POLLIN) {}
 			 */
 		}
-	}
+    }
+    /*
+    bool flag_control_offboard_enabled;
+    bool flag_control_rates_enabled;
+    bool flag_control_attitude_enabled;
+    bool flag_control_rattitude_enabled;
+    bool flag_control_force_enabled;
+    bool flag_control_acceleration_enabled;
+    bool flag_control_velocity_enabled;
+    bool flag_control_position_enabled;
+    bool flag_control_altitude_enabled;
+    bool flag_control_climb_rate_enabled;
+        bool flag_control_termination_enabled;
+      */
+        if(_vcontrol_mode.flag_armed)
+        {
+            PX4_INFO("flag_armed");
+        }else{
+            PX4_INFO("flag_armed");
+        }
+
+        if(_vcontrol_mode.flag_external_manual_override_ok)
+        {
+            PX4_INFO("flag_external_manual_override_ok");
+        }else{
+            PX4_INFO("not flag_external_manual_override_ok");
+        }
+
+        if(_vcontrol_mode.flag_system_hil_enabled)
+        {
+            PX4_INFO("flag_system_hil_enabled");
+        }else{
+            PX4_INFO("not flag_system_hil_enabled");
+        }
+
+        if(_vcontrol_mode.flag_control_manual_enabled)
+        {
+            PX4_INFO("flag_control_manual_enabled");
+        }else{
+            PX4_INFO("not flag_control_manual_enabled");
+        }
+
+        if(_vcontrol_mode.flag_control_auto_enabled)
+        {
+            PX4_INFO("flag_control_auto_enabled");
+        }else{
+            PX4_INFO("not flag_control_auto_enabled");
+        }
+
+        if(_vcontrol_mode.flag_control_tractionphase_enabled)
+        {
+            PX4_INFO("awesome traction phase");
+        }else{
+            PX4_INFO("not in an awesome traction phase");
+        }
+
+
+
 
 	PX4_INFO("exiting");
 
