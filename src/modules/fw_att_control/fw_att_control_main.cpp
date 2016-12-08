@@ -1151,13 +1151,14 @@ FixedwingAttitudeControl::task_main()
 						_parameters.trim_pitch;
 				_actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r * _parameters.man_yaw_scale + _parameters.trim_yaw;
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
-            }/*
+            }
+
             if(_vcontrol_mode.flag_control_tractionphase_enabled){
-                _actuators.control[actuator_controls_s::INDEX_ROLL] = 0;
+                _actuators.control[actuator_controls_s::INDEX_ROLL] = 0.1;
                 _actuators.control[actuator_controls_s::INDEX_PITCH] = 0;
                 _actuators.control[actuator_controls_s::INDEX_YAW] = 0;
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0;
-            }*/
+            }
 
 			_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
 			_actuators.control[5] = _manual.aux1;
