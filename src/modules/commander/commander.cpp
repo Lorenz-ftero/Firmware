@@ -512,7 +512,7 @@ int commander_main(int argc, char *argv[])
 
 			if (TRANSITION_DENIED == main_state_transition(&status, new_main_state, main_state_prev,  &status_flags, &internal_state)) {
 				warnx("mode change failed");
-			}
+            }
 			return 0;
 
 		} else {
