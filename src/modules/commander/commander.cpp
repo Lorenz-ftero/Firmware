@@ -508,6 +508,8 @@ int commander_main(int argc, char *argv[])
 				new_main_state = commander_state_s::MAIN_STATE_MANUAL;
 			} else if (!strcmp(argv[2], "altctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_ALTCTL;
+            } else if (!strcmp(argv[2], "traction")) {
+                new_main_state = commander_state_s::MAIN_STATE_AUTO_TRACTION;
 			} else if (!strcmp(argv[2], "posctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_POSCTL;
 			} else if (!strcmp(argv[2], "auto:mission")) {
@@ -3570,7 +3572,7 @@ set_control_mode()
 		control_mode.flag_control_termination_enabled = false;
 		/* override is not ok in stabilized mode */
 		control_mode.flag_external_manual_override_ok = false;
-        control_mode.flag_control_tractionphase_enabled=true;
+        control_mode.flag_control_tractionphase_enabled=false;
         break;
 
 	case vehicle_status_s::NAVIGATION_STATE_RATTITUDE:
@@ -3602,6 +3604,21 @@ set_control_mode()
 		control_mode.flag_control_termination_enabled = false;
         control_mode.flag_control_tractionphase_enabled=false;
 		break;
+
+    case vehicle_status_s::NAVIGATION_STATE_AUTO_Traction:
+        control_mode.flag_control_manual_enabled = true;
+        control_mode.flag_control_auto_enabled = false;
+        control_mode.flag_control_rates_enabled = true;
+        control_mode.flag_control_attitude_enabled = true;
+        control_mode.flag_control_rattitude_enabled = false;
+        control_mode.flag_control_altitude_enabled = true;
+        control_mode.flag_control_climb_rate_enabled = true;
+        control_mode.flag_control_position_enabled = false;
+        control_mode.flag_control_velocity_enabled = false;
+        control_mode.flag_control_acceleration_enabled = false;
+        control_mode.flag_control_termination_enabled = false;
+        control_mode.flag_control_tractionphase_enabled=true;
+        break;
 
 	case vehicle_status_s::NAVIGATION_STATE_POSCTL:
 		control_mode.flag_control_manual_enabled = true;
