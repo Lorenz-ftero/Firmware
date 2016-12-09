@@ -3605,7 +3605,7 @@ set_control_mode()
         control_mode.flag_control_tractionphase_enabled=false;
 		break;
 
-    case vehicle_status_s::NAVIGATION_STATE_AUTO_Traction:
+    case vehicle_status_s::NAVIGATION_STATE_AUTO_TRACTION:
         control_mode.flag_control_manual_enabled = true;
         control_mode.flag_control_auto_enabled = false;
         control_mode.flag_control_rates_enabled = true;
