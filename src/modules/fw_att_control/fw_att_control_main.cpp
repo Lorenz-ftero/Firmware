@@ -972,6 +972,11 @@ FixedwingAttitudeControl::task_main()
 				yaw_sp = _att_sp.yaw_body;
 				throttle_sp = _att_sp.thrust;
 
+                /*if in traction mode set a const roll_sp*/
+                 if(_vcontrol_mode.flag_control_tractionphase_enabled){
+                     roll_sp = .1;
+                 }
+
 				/* allow manual yaw in manual modes */
 				if (_vcontrol_mode.flag_control_manual_enabled) {
 					yaw_manual = _manual.r;
@@ -1156,12 +1161,13 @@ FixedwingAttitudeControl::task_main()
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
             }
 
+            /*
             if(_vcontrol_mode.flag_control_tractionphase_enabled){
                 _actuators.control[actuator_controls_s::INDEX_ROLL] = 0.1;
                 _actuators.control[actuator_controls_s::INDEX_PITCH] = 0;
                 _actuators.control[actuator_controls_s::INDEX_YAW] = 0;
                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = 0;
-            }
+            }*/
 
 			_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
 			_actuators.control[5] = _manual.aux1;
