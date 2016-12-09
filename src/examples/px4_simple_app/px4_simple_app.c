@@ -46,6 +46,7 @@
 #include <poll.h>
 #include <string.h>
 #include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/vtol_vehicle_status.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
@@ -236,6 +237,19 @@ int px4_simple_app_main(int argc, char *argv[])
                 }else{
                     PX4_INFO("not in an awesome traction phase");
                 }
+
+        static struct vtol_vehicle_status_s vtol_status;
+
+            /* vtol status changed */
+        int vtol_vehicle_status_sub=-1;
+            orb_copy(ORB_ID(vtol_vehicle_status), vtol_vehicle_status_sub, &vtol_status);
+
+            PX4_INFO("ROTARY WING MODE: %b", vtol_status.vtol_in_rw_mode);
+            PX4_INFO("IN TRANSITION_MODE: %b", vtol_status.vtol_in_trans_mode);
+            PX4_INFO("IN TRANSITION TO FIXED WING: %b", vtol_status.in_transition_to_fw);
+            PX4_INFO("ROTARY WING MODE: %b", vtol_status.vtol_in_rw_mode);
+
+
 
 
 
