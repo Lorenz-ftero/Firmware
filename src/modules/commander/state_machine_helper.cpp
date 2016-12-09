@@ -370,7 +370,6 @@ main_state_transition(struct vehicle_status_s *status, main_state_t new_main_sta
 
     case commander_state_s::MAIN_STATE_AUTO_TRACTION:
         ret = TRANSITION_CHANGED;
-        PX4_INFO("INTO TRACTION");
         break;
 
 	case commander_state_s::MAIN_STATE_ACRO:
@@ -441,7 +440,7 @@ main_state_transition(struct vehicle_status_s *status, main_state_t new_main_sta
 		if (internal_state->main_state != new_main_state) {
 			main_state_prev = internal_state->main_state;
 			internal_state->main_state = new_main_state;
-			internal_state->timestamp = hrt_absolute_time();
+            internal_state->timestamp = hrt_absolute_time();
 
 		} else {
 			ret = TRANSITION_NOT_CHANGED;
@@ -649,8 +648,9 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 	switch (internal_state->main_state) {
 	case commander_state_s::MAIN_STATE_ACRO:
 	case commander_state_s::MAIN_STATE_MANUAL:
-	case commander_state_s::MAIN_STATE_RATTITUDE:
-	case commander_state_s::MAIN_STATE_STAB:
+    case commander_state_s::MAIN_STATE_RATTITUDE:
+    case commander_state_s::MAIN_STATE_STAB:
+    case commander_state_s::MAIN_STATE_AUTO_TRACTION:
 	case commander_state_s::MAIN_STATE_ALTCTL:
 
 		/* require RC for all manual modes */
@@ -687,6 +687,10 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 			case commander_state_s::MAIN_STATE_STAB:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
 				break;
+
+            case commander_state_s::MAIN_STATE_AUTO_TRACTION:
+                status->nav_state = vehicle_status_s::NAVIGATION_STATE_AUTO_TRACTION;
+                break;
 
 			case commander_state_s::MAIN_STATE_ALTCTL:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_ALTCTL;
