@@ -2,26 +2,45 @@
 #
 # @name Selfmade Double Fuselage plane for Airborne Wind Energy
 #
-# @type  Standard Plane (Double Fuselage/Motor)
+#  @type VTOL Duo Tailsitter
 #
-# @output MAIN1 aileron
-# @output MAIN2 elevator
-# @output MAIN3 rudder
-# @output MAIN4 throttle
-# @output MAIN5 flaps
-#
-# @output AUX1 feed-through of RC AUX1 channel
-# @output AUX2 feed-through of RC AUX2 channel
-# @output AUX3 feed-through of RC AUX3 channel
+# @output MAIN1 motor left
+# @output MAIN2 motor right
+# @output MAIN3 elevator
+# @output MAIN4 flaps
+# @output MAIN5 elevon left
+# @output MAIN6 elevon right
 #
 # @maintainer Cla Mattia Galliard <cla@ftero.ch> Focus Project ETH Zuerich Ftero <www.ftero.ch>
+#
 
-sh /etc/init.d/rc.fw_defaults
+sh /etc/init.d/rc.vtol_defaults
 
-set MIXER AERT
+if [ $AUTOCNF == yes ]
+then
+        param set MC_ROLL_P 6.0
+        param set MC_ROLLRATE_P 0.12
+        param set MC_ROLLRATE_I 0.002
+        param set MC_ROLLRATE_D 0.003
+        param set MC_ROLLRATE_FF 0.0
+        param set MC_PITCH_P 4.5
+        param set MC_PITCHRATE_P 0.3
+        param set MC_PITCHRATE_I 0.002
+        param set MC_PITCHRATE_D 0.003
+        param set MC_PITCHRATE_FF 0.0
+        param set MC_YAW_P 3.8
+        param set MC_YAW_FF 0.5
+        param set MC_YAWRATE_P 0.22
+        param set MC_YAWRATE_I 0.02
+        param set MC_YAWRATE_D 0.0
+        param set MC_YAWRATE_FF 0.0
 
-# use PWM parameters for throttle channel
-set PWM_OUT 4
-set PWM_DISARMED p:PWM_DISARMED
-set PWM_MIN p:PWM_MIN
-set PWM_MAX p:PWM_MAX
+        param set VT_MOT_COUNT 2
+        param set VT_IDLE_PWM_MC  1080
+        param set VT_TYPE 0
+        param set MAV_TYPE 19
+fi
+
+set MIXER lara_vtol
+
+set PWM_OUT 1234
