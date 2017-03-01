@@ -16,7 +16,6 @@
 # @output AUX3 feed-through of RC AUX3 channel
 #
 # @maintainer Gabriel Koenig <gabriel@ftero.ch>
-# @project Focus Project ETH Zuerich Ftero <www.ftero.ch>
 
 sh /etc/init.d/rc.vtol_defaults
 
