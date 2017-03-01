@@ -1,4 +1,4 @@
-Caipirinha tailsitter mixer
+LARA Hover mixer
 ============================
 
 This file defines a mixer for the TBS Caipirinha tailsitter edition. This vehicle
@@ -17,11 +17,10 @@ R: 2- 10000 10000 10000 0
 
 Zero mixer (2x)
 ---------------
-Channels 3,4 are unused.
+Channels 3 is unused.
 
 Z:
 
-Z:
 
 Elevons/Ailerons mixer
 --------------
