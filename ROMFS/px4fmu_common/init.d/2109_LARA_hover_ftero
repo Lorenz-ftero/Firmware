@@ -1,0 +1,54 @@
+#!nsh
+#
+# @name Selfmade Double Fuselage plane for Airborne Wind Energy
+#
+# @type  Standard Plane (Double Fuselage/Motor)
+#
+# @output MAIN1 left motor
+# @output MAIN2 right motor
+# @output MAIN3 empty
+# @output MAIN4 elevator
+# @output MAIN5 left aileron
+# @output MAIN6 right aileron
+#
+# @output AUX1 feed-through of RC AUX1 channel
+# @output AUX2 feed-through of RC AUX2 channel
+# @output AUX3 feed-through of RC AUX3 channel
+#
+# @maintainer Gabriel Koenig <gabriel@ftero.ch>
+# @project Focus Project ETH Zuerich Ftero <www.ftero.ch>
+
+sh /etc/init.d/rc.vtol_defaults
+
+if [ $AUTOCNF == yes ]
+then
+        param set MC_ROLL_P 6.0
+        param set MC_ROLLRATE_P 0.12
+        param set MC_ROLLRATE_I 0.002
+        param set MC_ROLLRATE_D 0.003
+        param set MC_ROLLRATE_FF 0.0
+        param set MC_PITCH_P 4.5
+        param set MC_PITCHRATE_P 0.3
+        param set MC_PITCHRATE_I 0.002
+        param set MC_PITCHRATE_D 0.003
+        param set MC_PITCHRATE_FF 0.0
+        param set MC_YAW_P 3.8
+        param set MC_YAW_FF 0.5
+        param set MC_YAWRATE_P 0.22
+        param set MC_YAWRATE_I 0.02
+        param set MC_YAWRATE_D 0.0
+        param set MC_YAWRATE_FF 0.0
+
+        param set VT_MOT_COUNT 2
+        param set VT_IDLE_PWM_MC  1080
+        param set VT_TYPE 0
+        param set MAV_TYPE 19
+fi
+
+
+set MIXER LARA_hover
+
+set PWM_OUT 1234
+
+
+
