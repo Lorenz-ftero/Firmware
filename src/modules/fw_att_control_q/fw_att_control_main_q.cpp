@@ -1011,20 +1011,24 @@ FixedwingAttitudeControlQ::task_main()
 
                                 /*Creating desired Quaternion from roll pitch yaw set points for testing,
                                  * later one should pushlish a desired Quaternion directly in the higher order controler*/
-                                math::Quaternion q_des = from_euler(roll_sp,pitch_sp,yaw_sp);
+                                math::Quaternion q_des;
+                                q_des.from_euler(roll_sp,pitch_sp,yaw_sp);
 
                                 /*Calculating the Quaternion error*/
                                 math::Quaternion q_err = q_att*q_des.conjugated(); //double check
 
                                 /*Apply P Controller*/
-                                math::Vector Mdes = _parameters.q_p * q_err.imag();
+                                math::Vector<3> Mdes = q_err.imag();
+                                Mdes(0)=_parameters.q_p *Mdes(0);
+                                Mdes(1)=_parameters.q_p *Mdes(1);
+                                Mdes(2)=_parameters.q_p *Mdes(2);
 
                                 /*Implement Saturation here, if needed. Does the mixer the job?*/
 
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
-                                _actuators.control[0]=(PX4_ISFINITE(Mdes[0])) ? Mdes[0] + _parameters.trim_roll : _parameters.trim_roll;
-                                _actuators.control[1]=(PX4_ISFINITE(Mdes[1])) ? Mdes[1] + _parameters.trim_pitch : _parameters.trim_pitch;;
-                                _actuators.control[2]=(PX4_ISFINITE(Mdes[2])) ? Mdes[2] + _parameters.trim_yaw : _parameters.trim_yaw;
+                                _actuators.control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
+                                _actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;;
+                                _actuators.control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
 
 
 				/* Prepare speed_body_u and speed_body_w */
