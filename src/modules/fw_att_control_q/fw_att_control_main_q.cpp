@@ -1008,12 +1008,9 @@ FixedwingAttitudeControlQ::task_main()
 					_wheel_ctrl.reset_integrator();
 				}
 
-				/* Prepare speed_body_u and speed_body_w */
-				float speed_body_u = _R(0, 0) * _global_pos.vel_n + _R(1, 0) * _global_pos.vel_e + _R(2, 0) * _global_pos.vel_d;
-				float speed_body_v = _R(0, 1) * _global_pos.vel_n + _R(1, 1) * _global_pos.vel_e + _R(2, 1) * _global_pos.vel_d;
-				float speed_body_w = _R(0, 2) * _global_pos.vel_n + _R(1, 2) * _global_pos.vel_e + _R(2, 2) * _global_pos.vel_d;
 
-                                /*Creating desired Quaternion from roll pitch yaw set points for testing, later one should pushlish a desired Quaternion directly in the higher order controler*/
+                                /*Creating desired Quaternion from roll pitch yaw set points for testing,
+                                 * later one should pushlish a desired Quaternion directly in the higher order controler*/
                                 math::Quaternion q_des = from_euler(roll_sp,pitch_sp,yaw_sp);
 
                                 /*Calculating the Quaternion error*/
@@ -1022,11 +1019,18 @@ FixedwingAttitudeControlQ::task_main()
                                 /*Apply P Controller*/
                                 math::Vector Mdes = _parameters.q_p * q_err.imag();
 
+                                /*Implement Saturation here, if needed. Does the mixer the job?*/
+
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
                                 _actuators.control[0]=(PX4_ISFINITE(Mdes[0])) ? Mdes[0] + _parameters.trim_roll : _parameters.trim_roll;
                                 _actuators.control[1]=(PX4_ISFINITE(Mdes[1])) ? Mdes[1] + _parameters.trim_pitch : _parameters.trim_pitch;;
                                 _actuators.control[2]=(PX4_ISFINITE(Mdes[2])) ? Mdes[2] + _parameters.trim_yaw : _parameters.trim_yaw;
 
+
+				/* Prepare speed_body_u and speed_body_w */
+				float speed_body_u = _R(0, 0) * _global_pos.vel_n + _R(1, 0) * _global_pos.vel_e + _R(2, 0) * _global_pos.vel_d;
+				float speed_body_v = _R(0, 1) * _global_pos.vel_n + _R(1, 1) * _global_pos.vel_e + _R(2, 1) * _global_pos.vel_d;
+				float speed_body_w = _R(0, 2) * _global_pos.vel_n + _R(1, 2) * _global_pos.vel_e + _R(2, 2) * _global_pos.vel_d;
 
 				/* Prepare data for attitude controllers */
 				struct ECL_ControlData control_input = {};
