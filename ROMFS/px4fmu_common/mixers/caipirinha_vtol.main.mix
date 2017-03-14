@@ -17,23 +17,30 @@ R: 2- 10000 10000 10000 0
 
 Zero mixer (2x)
 ---------------
-Channels 3,4 are unused.
+Channel 3 is unused.
+Channel 4 is unused
 
 Z:
+Z: 
 
-Z:
-
-Elevons mixer
+Elevons/Ailerons mixer
 --------------
-Channel 5 connects to the right (starboard) elevon.
-Channel 6 connects to the left (port) elevon.
+
+Channel 5 connects to the right (starboard) aileron.
+Channel 6 connects to the left (port) aileron.
+
+
+M: 2
+O:        7500    7500    0 -10000  10000
+S: 1 0  -10000  -10000    0 -10000  10000
+S: 1 1  -10000  -10000    0 -10000  10000
 
 M: 2
 O:        7500    7500    0 -10000  10000
 S: 1 0  -10000  -10000    0 -10000  10000
 S: 1 1   10000   10000    0 -10000  10000
 
-M: 2
-O:        7500    7500    0 -10000  10000
-S: 1 0  -10000  -10000    0 -10000  10000
-S: 1 1  -10000  -10000    0 -10000  10000
+M: 1
+O:      10000  10000      0 -10000  10000
+S: 1 1  10000  10000      0 -10000  10000
+
