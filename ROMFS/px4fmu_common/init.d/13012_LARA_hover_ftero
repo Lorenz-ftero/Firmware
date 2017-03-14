@@ -2,14 +2,15 @@
 #
 # @name Selfmade Double Fuselage plane for Airborne Wind Energy
 #
-# @type  Standard Plane (Double Fuselage/Motor)
+# @type  VTOL Duo Tailsitter
 #
 # @output MAIN1 left motor
 # @output MAIN2 right motor
 # @output MAIN3 empty
-# @output MAIN4 elevator
+# @output MAIN4 empty
 # @output MAIN5 left aileron
 # @output MAIN6 right aileron
+# @output MAIN7 elevator
 #
 # @output AUX1 feed-through of RC AUX1 channel
 # @output AUX2 feed-through of RC AUX2 channel
