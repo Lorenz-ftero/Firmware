@@ -216,7 +216,13 @@ private:
 		float flaps_scale;				/**< Scale factor for flaps */
 		float flaperon_scale;			/**< Scale factor for flaperons */
 
-                float q_p;
+                float q_p_r;
+                float q_p_p;
+                float q_p_y;
+
+                float q_d_r;
+                float q_d_p;
+                float q_d_y;
 
 		int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
 
@@ -267,9 +273,15 @@ private:
 		param_t man_yaw_scale;
 
 		param_t flaps_scale;
-		param_t flaperon_scale;
+                param_t flaperon_scale;
 
-                param_t q_p;
+                param_t q_p_r;
+                param_t q_p_p;
+                param_t q_p_y;
+
+                param_t q_d_r;
+                param_t q_d_p;
+                param_t q_d_y;
 
 		param_t vtol_type;
 
@@ -455,7 +467,13 @@ FixedwingAttitudeControlQ::FixedwingAttitudeControlQ() :
         _parameter_handles.flaps_scale = param_find("FW_Q_FLAPS_SCL");
         _parameter_handles.flaperon_scale = param_find("FW_Q_FLAPER_SCL");
 
-        _parameter_handles.q_p = param_find("FW_Q_P_QCON");
+        _parameter_handles.q_p_r = param_find("FW_Q_P_ROLL");
+        _parameter_handles.q_p_p = param_find("FW_Q_P_PITCH");
+        _parameter_handles.q_p_y = param_find("FW_Q_P_YAW");
+
+        _parameter_handles.q_d_r = param_find("FW_Q_D_ROLL");
+        _parameter_handles.q_d_p = param_find("FW_Q_D_PITCH");
+        _parameter_handles.q_d_y = param_find("FW_Q_D_YAW");
 
 	_parameter_handles.vtol_type = param_find("VT_TYPE");
 
@@ -546,9 +564,15 @@ FixedwingAttitudeControlQ::parameters_update()
 	param_get(_parameter_handles.man_yaw_scale, &(_parameters.man_yaw_scale));
 
 	param_get(_parameter_handles.flaps_scale, &_parameters.flaps_scale);
-	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
+        param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
-        param_get(_parameter_handles.q_p, &_parameters.q_p);
+        param_get(_parameter_handles.q_p_r, &_parameters.q_p_r);
+        param_get(_parameter_handles.q_p_p, &_parameters.q_p_p);
+        param_get(_parameter_handles.q_p_y, &_parameters.q_p_y);
+
+        param_get(_parameter_handles.q_d_r, &_parameters.q_d_r);
+        param_get(_parameter_handles.q_d_p, &_parameters.q_d_p);
+        param_get(_parameter_handles.q_d_y, &_parameters.q_d_y);
 
 	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
 
@@ -735,6 +759,7 @@ FixedwingAttitudeControlQ::task_main()
 	_task_running = true;
 
         while (!_task_should_exit) {
+                warnx("%.4f %.4f %.4f %.4f %.4f %.4f", double(_parameters.q_p_r) ,double(_parameters.q_p_p) ,double(_parameters.q_p_y ),double(_parameters.q_d_r) ,double(_parameters.q_d_p ),double(_parameters.q_d_y));
 
 		static int loop_counter = 0;
 
@@ -1010,7 +1035,10 @@ FixedwingAttitudeControlQ::task_main()
 
 
                                 /*Creating desired Quaternion from roll pitch yaw set points for testing,
-                                 * later one should pushlish a desired Quaternion directly in the higher order controler*/
+                                 * later one should pushlish a desired Quaternion directly in the higher order
+                                 * controler. NOTE: There is a Q_error and a Q_desired already in the vehicle attitude setpoint message
+                                 * but Fw_POS control does not use it*/
+
                                 math::Quaternion q_des;
                                 q_des.from_euler(roll_sp,pitch_sp,yaw_sp);
 
@@ -1019,15 +1047,14 @@ FixedwingAttitudeControlQ::task_main()
 
                                 /*Apply P Controller*/
                                 math::Vector<3> Mdes = q_err.imag();
-                                Mdes(0)=_parameters.q_p *Mdes(0);
-                                Mdes(1)=_parameters.q_p *Mdes(1);
-                                Mdes(2)=_parameters.q_p *Mdes(2);
+                                Mdes(0)=_parameters.q_p_r * Mdes(0);
+                                Mdes(1)=_parameters.q_p_p * Mdes(1);
+                                Mdes(2)=_parameters.q_p_y * Mdes(2);
 
-                                /*Implement Saturation here, if needed. Does the mixer the job?*/
 
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
                                 _actuators.control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
-                                _actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;;
+                                _actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
                                 _actuators.control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
 
 

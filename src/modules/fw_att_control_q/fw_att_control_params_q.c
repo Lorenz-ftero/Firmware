@@ -46,19 +46,103 @@
  */
 
 /**
- * Quaterion Control Proporional Part
+ * Quaterion Control Proporional Part for Roll
  *
  * This defines the proportional part of a P - Controller for the Quaternion Control
  *
  * @unit s
- * @min 0.4
+ * @min 0.1
  * @max 1.0
  * @decimal 2
  * @increment 0.05
  * @group FW Attitude Control
  */
 
-PARAM_DEFINE_FLOAT(FW_Q_P_QCON, 0.4f);
+PARAM_DEFINE_FLOAT(FW_Q_P_ROLL, 0.1f);
+
+
+
+/**
+ * Quaterion Control Proporional Part for Pitch
+ *
+ * This defines the proportional part of a P - Controller for the Quaternion Control
+ *
+ * @unit s
+ * @min 0.1
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+
+PARAM_DEFINE_FLOAT(FW_Q_P_PITCH, 0.2f);
+
+
+
+/**
+ * Quaterion Control Proporional Part for Yaw
+ *
+ * This defines the proportional part of a P - Controller for the Quaternion Control
+ *
+ * @unit s
+ * @min 0.1
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+
+PARAM_DEFINE_FLOAT(FW_Q_P_YAW, 0.3f);
+
+
+/**
+ * Quaterion Control Damping Part for Roll
+ *
+ * This defines the proportional part of a P - Controller for the Quaternion Control
+ *
+ * @unit s
+ * @min 0.1
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+
+PARAM_DEFINE_FLOAT(FW_Q_D_ROLL, 0.4f);
+
+
+
+/**
+ * Quaterion Control Damping Part for Pitch
+ *
+ * This defines the proportional part of a P - Controller for the Quaternion Control
+ *
+ * @unit s
+ * @min 0.1
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+
+PARAM_DEFINE_FLOAT(FW_Q_D_PITCH, 0.5f);
+
+
+
+/**
+ * Quaterion Control Damping Part for Yaw
+ *
+ * This defines the proportional part of a P - Controller for the Quaternion Control
+ *
+ * @unit s
+ * @min 0.1
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+
+PARAM_DEFINE_FLOAT(FW_Q_D_YAW, 0.6f);
 
 /**
  * Attitude Roll Time Constant
