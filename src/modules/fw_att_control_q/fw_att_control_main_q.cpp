@@ -62,6 +62,7 @@
 #include <uORB/topics/fw_virtual_attitude_setpoint.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/actuator_ghost_controls.h>
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/fw_virtual_rates_setpoint.h>
 #include <uORB/topics/mc_virtual_rates_setpoint.h>
@@ -138,8 +139,9 @@ private:
 
 	orb_advert_t	_rate_sp_pub;			/**< rate setpoint publication */
 	orb_advert_t	_attitude_sp_pub;		/**< attitude setpoint point */
-	orb_advert_t	_actuators_0_pub;		/**< actuator control group 0 setpoint */
-	orb_advert_t	_actuators_2_pub;		/**< actuator control group 1 setpoint (Airframe) */
+        orb_advert_t	_actuators_0_pub;		/**< actuator control group 0 setpoint */
+        orb_advert_t	_actuators_2_pub;		/**< actuator control group 1 setpoint (Airframe) */
+        orb_advert_t	_actuators_ghost_pub;		/**< actuator control group 1 setpoint (Airframe) */
 
 	orb_id_t _rates_sp_id;	// pointer to correct rates setpoint uORB metadata structure
 	orb_id_t _actuators_id;	// pointer to correct actuator controls0 uORB metadata structure
@@ -153,6 +155,7 @@ private:
 	struct vehicle_control_mode_s			_vcontrol_mode;		/**< vehicle control mode */
 	struct actuator_controls_s			_actuators;		/**< actuator control inputs */
 	struct actuator_controls_s			_actuators_airframe;	/**< actuator control inputs */
+        struct actuator_ghost_controls_s		_actuators_ghost;	/**< actuator control inputs for ghost mode*/
 	struct vehicle_global_position_s		_global_pos;		/**< global position */
 	struct vehicle_status_s				_vehicle_status;	/**< vehicle status */
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
@@ -382,8 +385,9 @@ FixedwingAttitudeControlQ::FixedwingAttitudeControlQ() :
 	/* publications */
 	_rate_sp_pub(nullptr),
 	_attitude_sp_pub(nullptr),
-	_actuators_0_pub(nullptr),
-	_actuators_2_pub(nullptr),
+        _actuators_0_pub(nullptr),
+        _actuators_2_pub(nullptr),
+        _actuators_ghost_pub(nullptr),
 
 	_rates_sp_id(0),
 	_actuators_id(0),
@@ -400,7 +404,7 @@ FixedwingAttitudeControlQ::FixedwingAttitudeControlQ() :
 #endif
 	/* states */
 	_setpoint_valid(false),
-	_debug(false),
+        _debug(false),
 	_flaps_applied(0),
 	_flaperons_applied(0)
 {
@@ -413,6 +417,7 @@ FixedwingAttitudeControlQ::FixedwingAttitudeControlQ() :
 	_vcontrol_mode = {};
 	_actuators = {};
 	_actuators_airframe = {};
+        _actuators_ghost ={};
 	_global_pos = {};
 	_vehicle_status = {};
 	_vehicle_land_detected = {};
@@ -1045,25 +1050,30 @@ FixedwingAttitudeControlQ::task_main()
                                 /*Calculating the Quaternion error*/
                                 math::Quaternion q_err = q_att*q_des.conjugated(); //double check
 
-                                /*Apply P Controller*/
+                                /*Apply PD Controller*/
 
-                                //float par_p_data[3][3]={{_parameters.q_p_r,0,0},{0,_parameters.q_p_p,0},{0,0,_parameters.q_p_y}};
-                                //float par_d_data[3][3]={{_parameters.q_d_r,0,0},{0,_parameters.q_d_p,0},{0,0,_parameters.q_d_y}};
-                                //math::Matrix<3, 3> Par_P = math::Matrix<3, 3>(par_p_data);
-                                //math::Matrix<3, 3> Par_D = math::Matrix<3, 3>(par_d_data);
-                                //warnx("%.4f %.4f %.4f", double(Par_P(0,0)), double(Par_P(1,1)), double(Par_P(2,2)) );
-                                //Matrix implentation resulted in an error wich caused the shell not to open anymore resolve later
+                                float par_p_data[3][3]={{_parameters.q_p_r,0,0},{0,_parameters.q_p_p,0},{0,0,_parameters.q_p_y}};
+                                float par_d_data[3][3]={{_parameters.q_d_r,0,0},{0,_parameters.q_d_p,0},{0,0,_parameters.q_d_y}};
+                                math::Matrix<3, 3> Par_P = math::Matrix<3, 3>(par_p_data);
+                                math::Matrix<3, 3> Par_D = math::Matrix<3, 3>(par_d_data);
+                                math::Vector<3> rates_vector = math::Vector<3>(_ctrl_state.roll_rate,_ctrl_state.pitch_rate,_ctrl_state.yaw_rate);
 
-                                math::Vector<3> Mdes = q_err.imag();
-                                Mdes(0)=_parameters.q_p_r * Mdes(0) - _parameters.q_d_r *_ctrl_state.roll_rate;
-                                Mdes(1)=_parameters.q_p_p * Mdes(1) - _parameters.q_d_p *_ctrl_state.pitch_rate;
-                                Mdes(2)=_parameters.q_p_y * Mdes(2) - _parameters.q_d_y *_ctrl_state.yaw_rate;
+                                math::Vector<3> Mdes = Par_P * q_err.imag() - Par_D * rates_vector;
+
+                                //math::Vector<3> Mdes = q_err.imag();
+                                //Mdes(0)=_parameters.q_p_r * Mdes(0) - _parameters.q_d_r *_ctrl_state.roll_rate;
+                                //Mdes(1)=_parameters.q_p_p * Mdes(1) - _parameters.q_d_p *_ctrl_state.pitch_rate;
+                                //Mdes(2)=_parameters.q_p_y * Mdes(2) - _parameters.q_d_y *_ctrl_state.yaw_rate;
 
 
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
                                 _actuators.control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
                                 _actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
                                 _actuators.control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
+
+                                _actuators_ghost.ghost_control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
+                                _actuators_ghost.ghost_control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
+                                _actuators_ghost.ghost_control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
 
 
 				/* Prepare speed_body_u and speed_body_w */
@@ -1230,6 +1240,15 @@ FixedwingAttitudeControlQ::task_main()
 			_actuators.timestamp_sample = _ctrl_state.timestamp;
 			_actuators_airframe.timestamp = hrt_absolute_time();
 			_actuators_airframe.timestamp_sample = _ctrl_state.timestamp;
+                        _actuators_ghost.timestamp = hrt_absolute_time();
+                        _actuators_ghost.timestamp_sample = _ctrl_state.timestamp;
+
+                        if (_actuators_ghost_pub != nullptr) {
+                                orb_publish(ORB_ID(actuator_ghost_controls), _actuators_ghost_pub, &_actuators_ghost);
+
+                        } else{
+                                _actuators_ghost_pub = orb_advertise(ORB_ID(actuator_ghost_controls), &_actuators_ghost);
+                        }
 
 			/* Only publish if any of the proper modes are enabled */
 			if (_vcontrol_mode.flag_control_rates_enabled ||
