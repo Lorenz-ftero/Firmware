@@ -32,6 +32,7 @@ set(config_module_list
 	drivers/qshell/posix
 
 	systemcmds/param
+	systemcmds/led_control
 	systemcmds/mixer
 	systemcmds/ver
 	systemcmds/topic_listener
@@ -66,9 +67,11 @@ set(config_module_list
 	lib/ecl
 	lib/geo
 	lib/geo_lookup
+	lib/led
 	lib/terrain_estimation
 	lib/runway_takeoff
 	lib/tailsitter_recovery
+	lib/version
 	lib/DriverFramework/framework
 
 	platforms/common

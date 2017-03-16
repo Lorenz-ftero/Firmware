@@ -48,6 +48,20 @@ then
 	model="iris"
 fi
 
+# check replay mode
+if [ "$replay_mode" == "ekf2" ]
+then
+	model="iris_replay"
+	# create the publisher rules
+	mkdir -p $rootfs
+	publisher_rules_file="$rootfs/orb_publisher.rules"
+	cat <<EOF > "$publisher_rules_file"
+restrict_topics: sensor_combined, vehicle_gps_position, vehicle_land_detected
+module: replay
+ignore_others: false
+EOF
+fi
+
 if [ "$#" -lt 7 ]
 then
 	echo usage: sitl_run.sh rc_script rcS_dir debugger program model src_path build_path
@@ -57,8 +71,10 @@ fi
 
 # kill process names that might stil
 # be running from last time
-pgrep gazebo && pkill gazebo
-pgrep px4 && pkill px4
+pkill -x gazebo || true
+pkill -x px4 || true
+pkill -x px4_$model || true
+
 jmavsim_pid=`ps aux | grep java | grep Simulator | cut -d" " -f1`
 if [ -n "$jmavsim_pid" ]
 then
@@ -134,7 +150,19 @@ then
 	ddd --debugger gdb --args $sitl_command
 elif [ "$debugger" == "valgrind" ]
 then
-	valgrind $sitl_command
+	valgrind --track-origins=yes --leak-check=full -v $sitl_command
+elif [ "$debugger" == "callgrind" ]
+then
+	valgrind --tool=callgrind -v $sitl_command
+elif [ "$debugger" == "ide" ]
+then
+	echo "######################################################################"
+	echo
+	echo "PX4 simulator not started, use your IDE to start PX4_${model} target."
+	echo "Hit enter to quit..."
+	echo
+	echo "######################################################################"
+	read
 else
 	$sitl_command
 fi
