@@ -759,7 +759,7 @@ FixedwingAttitudeControlQ::task_main()
 	_task_running = true;
 
         while (!_task_should_exit) {
-                warnx("%.4f %.4f %.4f %.4f %.4f %.4f", double(_parameters.q_p_r) ,double(_parameters.q_p_p) ,double(_parameters.q_p_y ),double(_parameters.q_d_r) ,double(_parameters.q_d_p ),double(_parameters.q_d_y));
+                //warnx("%.4f %.4f %.4f %.4f %.4f %.4f", double(_parameters.q_p_r) ,double(_parameters.q_p_p) ,double(_parameters.q_p_y ),double(_parameters.q_d_r) ,double(_parameters.q_d_p ),double(_parameters.q_d_y));
 
 		static int loop_counter = 0;
 
@@ -1046,10 +1046,18 @@ FixedwingAttitudeControlQ::task_main()
                                 math::Quaternion q_err = q_att*q_des.conjugated(); //double check
 
                                 /*Apply P Controller*/
+
+                                //float par_p_data[3][3]={{_parameters.q_p_r,0,0},{0,_parameters.q_p_p,0},{0,0,_parameters.q_p_y}};
+                                //float par_d_data[3][3]={{_parameters.q_d_r,0,0},{0,_parameters.q_d_p,0},{0,0,_parameters.q_d_y}};
+                                //math::Matrix<3, 3> Par_P = math::Matrix<3, 3>(par_p_data);
+                                //math::Matrix<3, 3> Par_D = math::Matrix<3, 3>(par_d_data);
+                                //warnx("%.4f %.4f %.4f", double(Par_P(0,0)), double(Par_P(1,1)), double(Par_P(2,2)) );
+                                //Matrix implentation resulted in an error wich caused the shell not to open anymore resolve later
+
                                 math::Vector<3> Mdes = q_err.imag();
-                                Mdes(0)=_parameters.q_p_r * Mdes(0);
-                                Mdes(1)=_parameters.q_p_p * Mdes(1);
-                                Mdes(2)=_parameters.q_p_y * Mdes(2);
+                                Mdes(0)=_parameters.q_p_r * Mdes(0) - _parameters.q_d_r *_ctrl_state.roll_rate;
+                                Mdes(1)=_parameters.q_p_p * Mdes(1) - _parameters.q_d_p *_ctrl_state.pitch_rate;
+                                Mdes(2)=_parameters.q_p_y * Mdes(2) - _parameters.q_d_y *_ctrl_state.yaw_rate;
 
 
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
