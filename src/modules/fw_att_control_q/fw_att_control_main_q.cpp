@@ -792,7 +792,7 @@ FixedwingAttitudeControlQ::task_main()
 
 			/* update parameters from storage */
 			parameters_update();
-		}
+                }
 
 		/* only run controller if attitude changed */
 		if (fds[1].revents & POLLIN) {
@@ -1245,6 +1245,7 @@ FixedwingAttitudeControlQ::task_main()
 
                         if (_actuators_ghost_pub != nullptr) {
                                 orb_publish(ORB_ID(actuator_ghost_controls), _actuators_ghost_pub, &_actuators_ghost);
+                                warnx("publishing actuator ghost controls");
 
                         } else{
                                 _actuators_ghost_pub = orb_advertise(ORB_ID(actuator_ghost_controls), &_actuators_ghost);

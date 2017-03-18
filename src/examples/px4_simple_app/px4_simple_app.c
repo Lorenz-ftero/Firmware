@@ -49,6 +49,7 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/actuator_ghost_controls.h>
 
 __EXPORT int px4_simple_app_main(int argc, char *argv[]);
 
@@ -56,19 +57,15 @@ int px4_simple_app_main(int argc, char *argv[])
 {
 	PX4_INFO("Hello Sky!");
 
-	/* subscribe to sensor_combined topic */
-	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
-	/* limit the update rate to 5 Hz */
-	orb_set_interval(sensor_sub_fd, 200);
+    /* subscribe to sensor_combined topic */
 
-	/* advertise attitude topic */
-	struct vehicle_attitude_s att;
-	memset(&att, 0, sizeof(att));
-	orb_advert_t att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
+    int actuators_ghost_sub = orb_subscribe((ORB_ID(actuator_ghost_controls)));
+    /* limit the update rate to 5 Hz */
+    orb_set_interval(actuators_ghost_sub, 200);
 
 	/* one could wait for multiple topics with this technique, just using one here */
-	px4_pollfd_struct_t fds[] = {
-		{ .fd = sensor_sub_fd,   .events = POLLIN },
+    px4_pollfd_struct_t fds[] = {
+        { .fd = actuators_ghost_sub,   .events = POLLIN },
 		/* there could be more file descriptors here, in the form like:
 		 * { .fd = other_sub_fd,   .events = POLLIN },
 		 */
@@ -98,24 +95,15 @@ int px4_simple_app_main(int argc, char *argv[])
 
 			if (fds[0].revents & POLLIN) {
 				/* obtained data for the first file descriptor */
-				struct sensor_combined_s raw;
+                struct actuator_ghost_controls_s ghost;
 				/* copy sensors raw data into local buffer */
-				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-				PX4_INFO("Accelerometer:\t%8.4f\t%8.4f\t%8.4f",
-					 (double)raw.accelerometer_m_s2[0],
-					 (double)raw.accelerometer_m_s2[1],
-					 (double)raw.accelerometer_m_s2[2]);
-
-				/* set att and publish this information for other apps */
-				att.roll = raw.accelerometer_m_s2[0];
-				att.pitch = raw.accelerometer_m_s2[1];
-				att.yaw = raw.accelerometer_m_s2[2];
-				orb_publish(ORB_ID(vehicle_attitude), att_pub, &att);
+                orb_copy(ORB_ID(actuator_ghost_controls), actuators_ghost_sub, &ghost);
+                PX4_INFO("Ghost Controls: %.6f %.6f %.6f ",
+                         (double)ghost.ghost_control[0],
+                         (double)ghost.ghost_control[1],
+                         (double)ghost.ghost_control[2]);
 			}
 
-			/* there could be more file descriptors here, in the form like:
-			 * if (fds[1..n].revents & POLLIN) {}
-			 */
 		}
 	}
 
