@@ -8,6 +8,7 @@
 # @output MAIN2 motor right
 # @output MAIN5 elevon left
 # @output MAIN6 elevon right
+# @output MAIN5 elevator
 #
 # @maintainer Roman Bapst <roman@px4.io>
 #
