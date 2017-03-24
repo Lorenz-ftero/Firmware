@@ -646,6 +646,17 @@ struct log_PARM_s {
 	char name[16];
 	float value;
 };
+
+/* --- ATCG - Actuator ghost controls for debuggin ---*/
+#define LOG_ATCG_MSG 132
+struct log_ATCG_s{
+    float roll;
+    float pitch;
+    float yaw;
+    float thrust;
+};
+
+
 #pragma pack(pop)
 
 // the lower type of initialisation is not supported in C++
@@ -718,7 +729,8 @@ static const struct log_format_s log_formats[] = {
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-	LOG_FORMAT(PARM, "Nf", "Name,Value")
+        LOG_FORMAT(PARM, "Nf", "Name,Value"),
+        LOG_FORMAT(ATCG, "ffff",		"Roll,Pitch,Yaw,Thrust")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);

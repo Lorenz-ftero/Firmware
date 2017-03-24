@@ -78,6 +78,7 @@
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/vehicle_rates_setpoint.h>
 #include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/actuator_ghost_controls.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/vehicle_command.h>
 #include <uORB/topics/vehicle_local_position.h>
@@ -1191,6 +1192,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct actuator_outputs_s act_outputs;
 		struct actuator_controls_s act_controls;
 		struct actuator_controls_s act_controls1;
+                struct actuator_ghost_controls_s act_ghost_controls;
 		struct vehicle_local_position_s local_pos;
 		struct vehicle_local_position_setpoint_s local_pos_sp;
 		struct vehicle_global_position_s global_pos;
@@ -1221,7 +1223,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct ekf2_replay_s replay;
 		struct vehicle_land_detected_s land_detected;
 		struct cpuload_s cpuload;
-		struct vehicle_gps_position_s dual_gps_pos;
+                struct vehicle_gps_position_s dual_gps_pos;
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1282,7 +1284,8 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_RPL5_s log_RPL5;
 			struct log_LAND_s log_LAND;
 			struct log_RPL6_s log_RPL6;
-			struct log_LOAD_s log_LOAD;
+                        struct log_LOAD_s log_LOAD;
+                        struct log_ATCG_s log_ATCG;
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1302,6 +1305,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int act_outputs_1_sub;
 		int act_controls_sub;
 		int act_controls_1_sub;
+                int act_ghost_controls_sub;
 		int local_pos_sub;
 		int local_pos_sp_sub;
 		int global_pos_sub;
@@ -1347,6 +1351,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.act_outputs_1_sub = -1;
 	subs.act_controls_sub = -1;
 	subs.act_controls_1_sub = -1;
+        subs.act_ghost_controls_sub = -1;
 	subs.local_pos_sub = -1;
 	subs.local_pos_sp_sub = -1;
 	subs.global_pos_sub = -1;
@@ -1867,24 +1872,34 @@ int sdlog2_thread_main(int argc, char *argv[])
 			}
 
 			/* --- ACTUATOR CONTROL --- */
-			if (copy_if_updated(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &subs.act_controls_sub, &buf.act_controls)) {
-				log_msg.msg_type = LOG_ATTC_MSG;
+                        if (copy_if_updated(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &subs.act_controls_sub, &buf.act_controls)) {
+                                log_msg.msg_type = LOG_ATTC_MSG;
 				log_msg.body.log_ATTC.roll = buf.act_controls.control[0];
 				log_msg.body.log_ATTC.pitch = buf.act_controls.control[1];
 				log_msg.body.log_ATTC.yaw = buf.act_controls.control[2];
 				log_msg.body.log_ATTC.thrust = buf.act_controls.control[3];
 				LOGBUFFER_WRITE_AND_COUNT(ATTC);
-			}
+                        }
 
-			/* --- ACTUATOR CONTROL FW VTOL --- */
-			if(copy_if_updated(ORB_ID(actuator_controls_1), &subs.act_controls_1_sub,&buf.act_controls)) {
-				log_msg.msg_type = LOG_ATC1_MSG;
-				log_msg.body.log_ATTC.roll = buf.act_controls.control[0];
-				log_msg.body.log_ATTC.pitch = buf.act_controls.control[1];
-				log_msg.body.log_ATTC.yaw = buf.act_controls.control[2];
-				log_msg.body.log_ATTC.thrust = buf.act_controls.control[3];
-				LOGBUFFER_WRITE_AND_COUNT(ATTC);
-			}
+                        /* --- ACTUATOR CONTROL FW VTOL --- */
+                        if(copy_if_updated(ORB_ID(actuator_controls_1), &subs.act_controls_1_sub,&buf.act_controls)) {
+                                log_msg.msg_type = LOG_ATC1_MSG;
+                                log_msg.body.log_ATTC.roll = buf.act_controls.control[0];
+                                log_msg.body.log_ATTC.pitch = buf.act_controls.control[1];
+                                log_msg.body.log_ATTC.yaw = buf.act_controls.control[2];
+                                log_msg.body.log_ATTC.thrust = buf.act_controls.control[3];
+                                LOGBUFFER_WRITE_AND_COUNT(ATTC);
+                        }
+
+                        /* --- ACTUATOR GHOST CONTROL --- */
+                        if (copy_if_updated(ORB_ID(actuator_ghost_controls), &subs.act_ghost_controls_sub, &buf.act_ghost_controls)) {
+                                log_msg.msg_type = LOG_ATCG_MSG;
+                                log_msg.body.log_ATCG.roll = buf.act_ghost_controls.ghost_control[0];
+                                log_msg.body.log_ATCG.pitch = buf.act_ghost_controls.ghost_control[1];
+                                log_msg.body.log_ATCG.yaw = buf.act_ghost_controls.ghost_control[2];
+                                log_msg.body.log_ATCG.thrust = buf.act_ghost_controls.ghost_control[3];
+                                LOGBUFFER_WRITE_AND_COUNT(ATCG);
+                        }
 
 			/* --- LOCAL POSITION --- */
 			if (copy_if_updated(ORB_ID(vehicle_local_position), &subs.local_pos_sub, &buf.local_pos)) {
