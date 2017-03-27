@@ -25,9 +25,9 @@ set LOG_FILE /fs/microsd/bootlog.txt
 if mount -t vfat /dev/mmcsd0 /fs/microsd
 then
 	# Start playing the startup tune
-        #tone_alarm start
+        tone_alarm start
 else
-        #tone_alarm MBAGP
+        tone_alarm MBAGP
 	if mkfatfs /dev/mmcsd0
 	then
 		if mount -t vfat /dev/mmcsd0 /fs/microsd
@@ -35,7 +35,7 @@ else
 			echo "INFO  [init] MicroSD card formatted"
 		else
 			echo "ERROR [init] Format failed"
-                        #tone_alarm MNBG
+                        tone_alarm MNBG
 			set LOG_FILE /dev/null
 		fi
 	else
@@ -246,7 +246,7 @@ then
 
 			set IO_PRESENT yes
 		else
-                        #tone_alarm MLL32CP8MB
+                        tone_alarm MLL32CP8MB
 
 			if px4io start
 			then
@@ -266,16 +266,16 @@ then
 				if px4io checkcrc $IO_FILE
 				then
 					echo "PX4IO CRC OK after updating" >> $LOG_FILE
-                                        #tone_alarm MLL8CDE
+                                        tone_alarm MLL8CDE
 
 					set IO_PRESENT yes
 				else
 					echo "PX4IO update failed" >> $LOG_FILE
-                                        #tone_alarm $TUNE_ERR
+                                        tone_alarm $TUNE_ERR
 				fi
 			else
 				echo "PX4IO update failed" >> $LOG_FILE
-                                #tone_alarm $TUNE_ERR
+                                tone_alarm $TUNE_ERR
 			fi
 		fi
 		unset IO_FILE
@@ -283,7 +283,7 @@ then
 		if [ $IO_PRESENT == no ]
 		then
 			echo "PX4IO not found" >> $LOG_FILE
-                        #tone_alarm $TUNE_ERR
+                        tone_alarm $TUNE_ERR
 		fi
 	fi
 
@@ -386,7 +386,7 @@ then
 				sh /etc/init.d/rc.io
 			else
 				echo "PX4IO start failed" >> $LOG_FILE
-                                #tone_alarm $TUNE_ERR
+                                tone_alarm $TUNE_ERR
 			fi
 		fi
 
@@ -396,7 +396,7 @@ then
 			then
 			else
 				echo "FMU start failed" >> $LOG_FILE
-                                #tone_alarm $TUNE_ERR
+                                tone_alarm $TUNE_ERR
 			fi
 
 			if ver hwcmp PX4FMU_V1
@@ -428,7 +428,7 @@ then
 			then
 			else
 				echo "MK start failed" >> $LOG_FILE
-                                #tone_alarm $TUNE_ERR
+                                tone_alarm $TUNE_ERR
 			fi
 			unset MKBLCTRL_ARG
 		fi
@@ -439,7 +439,7 @@ then
 			if pwm_out_sim mode_pwm16
 			then
 			else
-                                #tone_alarm $TUNE_ERR
+                                tone_alarm $TUNE_ERR
 			fi
 		fi
 
@@ -455,7 +455,7 @@ then
 					sh /etc/init.d/rc.io
 				else
 					echo "PX4IO start failed" >> $LOG_FILE
-                                        #tone_alarm $TUNE_ERR
+                                        tone_alarm $TUNE_ERR
 				fi
 			fi
 		else
@@ -465,7 +465,7 @@ then
 				then
 				else
 					echo "FMU mode_$FMU_MODE start failed" >> $LOG_FILE
-                                        #tone_alarm $TUNE_ERR
+                                        tone_alarm $TUNE_ERR
 				fi
 
 				if ver hwcmp PX4FMU_V1
@@ -582,7 +582,7 @@ then
 		if uavcan start
 		then
 		else
-                        #tone_alarm $TUNE_ERR
+                        tone_alarm $TUNE_ERR
 		fi
 	fi
 
@@ -591,7 +591,7 @@ then
 		if uavcan start fw
 		then
 		else
-                        #tone_alarm $TUNE_ERR
+                        tone_alarm $TUNE_ERR
 		fi
 	fi
 
@@ -941,7 +941,7 @@ then
 		if [ $LOG_FILE == /dev/null ]
 		then
 			# Play SOS
-                        #tone_alarm error
+                        tone_alarm error
 		fi
 
 	fi
