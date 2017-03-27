@@ -1067,9 +1067,9 @@ FixedwingAttitudeControlQ::task_main()
 
 
                                 /*Publish the desired roll, pitch and yaw to the motors only if finite, add trim*/
-                                _actuators.control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
-                                _actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
-                                _actuators.control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
+                                //_actuators.control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
+                                //_actuators.control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
+                                //_actuators.control[2]=(PX4_ISFINITE(Mdes(2))) ? Mdes(2) + _parameters.trim_yaw : _parameters.trim_yaw;
 
                                 _actuators_ghost.ghost_control[0]=(PX4_ISFINITE(Mdes(0))) ? Mdes(0) + _parameters.trim_roll : _parameters.trim_roll;
                                 _actuators_ghost.ghost_control[1]=(PX4_ISFINITE(Mdes(1))) ? Mdes(1) + _parameters.trim_pitch : _parameters.trim_pitch;
