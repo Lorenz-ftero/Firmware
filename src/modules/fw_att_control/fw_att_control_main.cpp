@@ -546,7 +546,7 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
 	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
-        param_get(_parameter_handles.bank_angle, &_parameters.bank_angle)
+        param_get(_parameter_handles.bank_angle, &_parameters.bank_angle);
 
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
