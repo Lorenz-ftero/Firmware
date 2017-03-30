@@ -111,6 +111,7 @@
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/commander_state.h>
 #include <uORB/topics/cpuload.h>
+#include <uORB/topics/traction_status.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -1222,6 +1223,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct vehicle_land_detected_s land_detected;
 		struct cpuload_s cpuload;
 		struct vehicle_gps_position_s dual_gps_pos;
+                struct traction_status_s traction_status;
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1284,6 +1286,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_RPL6_s log_RPL6;
 			struct log_LOAD_s log_LOAD;
 			struct log_DPRS_s log_DPRS;
+                        struct log_TRST_s log_TRST;
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1334,6 +1337,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int commander_state_sub;
 		int cpuload_sub;
 		int diff_pres_sub;
+                int traction_status_sub;
 	} subs;
 
 	subs.cmd_sub = -1;
@@ -1377,6 +1381,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.commander_state_sub = -1;
 	subs.cpuload_sub = -1;
 	subs.diff_pres_sub = -1;
+        subs.traction_status_sub = -1;
 
 	/* add new topics HERE */
 
@@ -2321,6 +2326,20 @@ int sdlog2_thread_main(int argc, char *argv[])
 			LOGBUFFER_WRITE_AND_COUNT(LOAD);
 
 		}
+                /*  --- TRACTION STATUS --- */
+                if (copy_if_updated(ORB_ID(traction_status), &subs.traction_status_sub, &buf.traction_status)){
+                        log_msg.msg_type = LOG_TRST_MSG;
+                        log_msg.body.log_TRST.x = buf.traction_status.pos_inert[0];
+                        log_msg.body.log_TRST.y = buf.traction_status.pos_inert[1];
+                        log_msg.body.log_TRST.z = buf.traction_status.pos_inert[2];
+                        log_msg.body.log_TRST.r = buf.traction_status.pos_local_sphere[0];
+                        log_msg.body.log_TRST.phi = buf.traction_status.pos_local_sphere[1];
+                        log_msg.body.log_TRST.theta = buf.traction_status.pos_local_sphere[2];
+                        log_msg.body.log_TRST.roll_s = buf.traction_status.att_relativ[0];
+                        log_msg.body.log_TRST.pitch_s = buf.traction_status.att_relativ[1];
+                        log_msg.body.log_TRST.yaw_s = buf.traction_status.att_relativ[2];
+                        LOGBUFFER_WRITE_AND_COUNT(TRST);
+                }
 
 		pthread_mutex_lock(&logbuffer_mutex);
 

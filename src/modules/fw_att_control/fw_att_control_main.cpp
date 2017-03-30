@@ -72,6 +72,7 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/home_position.h>
+#include <uORB/topics/traction_status.h>
 #include <systemlib/param/param.h>
 #include <systemlib/err.h>
 #include <systemlib/pid/pid.h>
@@ -142,6 +143,7 @@ private:
 	orb_advert_t	_attitude_sp_pub;		/**< attitude setpoint point */
 	orb_advert_t	_actuators_0_pub;		/**< actuator control group 0 setpoint */
 	orb_advert_t	_actuators_2_pub;		/**< actuator control group 1 setpoint (Airframe) */
+        orb_advert_t    _traction_status_pub;
 
 	orb_id_t _rates_sp_id;	// pointer to correct rates setpoint uORB metadata structure
 	orb_id_t _actuators_id;	// pointer to correct actuator controls0 uORB metadata structure
@@ -159,6 +161,7 @@ private:
 	struct vehicle_status_s				_vehicle_status;	/**< vehicle status */
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
         struct home_position_s                          _home_position;
+        struct traction_status_s                        _traction_status;
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 	perf_counter_t	_nonfinite_input_perf;		/**< performance counter for non finite input */
@@ -286,9 +289,9 @@ private:
         float y_inert;
         float z_inert;
 
-        double local_r_s;
-        double local_theta_s;
-        double local_phi_s;
+        float local_r_s;
+        float local_theta_s;
+        float local_phi_s;
 
         math::Matrix<3, 3> _R_s;
         math::Matrix<3, 3> _R_relativ;
@@ -393,6 +396,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_attitude_sp_pub(nullptr),
 	_actuators_0_pub(nullptr),
 	_actuators_2_pub(nullptr),
+        _traction_status_pub(nullptr),
 
 	_rates_sp_id(0),
 	_actuators_id(0),
@@ -426,6 +430,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_vehicle_status = {};
 	_vehicle_land_detected = {};
         _home_position = {};
+        _traction_status = {};
 
 
 	_parameter_handles.p_tc = param_find("FW_P_TC");
@@ -840,6 +845,26 @@ FixedwingAttitudeControl::task_main()
                         _roll_s         = euler_angles_s(0);
                         _pitch_s        = euler_angles_s(1);
                         _yaw_s          = euler_angles_s(2);
+
+                        _traction_status.pos_inert[0]=x_inert;
+                        _traction_status.pos_inert[1]=y_inert;
+                        _traction_status.pos_inert[2]=z_inert;
+
+                        _traction_status.pos_local_sphere[0]=local_r_s;
+                        _traction_status.pos_local_sphere[1]=local_phi_s;
+                        _traction_status.pos_local_sphere[2]=local_theta_s;
+
+                        _traction_status.att_relativ[0]=_roll_s;
+                        _traction_status.att_relativ[1]=_pitch_s;
+                        _traction_status.att_relativ[2]=_yaw_s;
+
+                        _traction_status.timestamp=hrt_absolute_time();
+
+                        if(_traction_status_pub != nullptr){
+                                orb_publish(ORB_ID(traction_status), _traction_status_pub, &_traction_status);
+                        }else{
+                                _traction_status_pub = orb_advertise(ORB_ID(traction_status), &_traction_status);
+                        }
 
 
 
