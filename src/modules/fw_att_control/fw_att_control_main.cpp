@@ -71,6 +71,7 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/topics/home_position.h>
 #include <systemlib/param/param.h>
 #include <systemlib/err.h>
 #include <systemlib/pid/pid.h>
@@ -135,6 +136,7 @@ private:
 	int		_global_pos_sub;		/**< global position subscription */
 	int		_vehicle_status_sub;		/**< vehicle status subscription */
 	int		_vehicle_land_detected_sub;	/**< vehicle land detected subscription */
+        int             _home_sub;
 
 	orb_advert_t	_rate_sp_pub;			/**< rate setpoint publication */
 	orb_advert_t	_attitude_sp_pub;		/**< attitude setpoint point */
@@ -156,6 +158,7 @@ private:
 	struct vehicle_global_position_s		_global_pos;		/**< global position */
 	struct vehicle_status_s				_vehicle_status;	/**< vehicle status */
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
+        struct home_position_s                          _home_position;
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 	perf_counter_t	_nonfinite_input_perf;		/**< performance counter for non finite input */
@@ -273,11 +276,25 @@ private:
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
-	// Rotation matrix and euler angles to extract from control state
-	math::Matrix<3, 3> _R;
-	float _roll;
-	float _pitch;
-	float _yaw;
+        // Rotation matrix and euler angles to extract from control state
+        math::Matrix<3, 3> _R;
+        float _roll;
+        float _pitch;
+        float _yaw;
+
+        float x_inert;
+        float y_inert;
+        float z_inert;
+
+        double local_r_s;
+        double local_theta_s;
+        double local_phi_s;
+
+        math::Matrix<3, 3> _R_s;
+        math::Matrix<3, 3> _R_relativ;
+        float _roll_s;
+        float _pitch_s;
+        float _yaw_s;
 
 	ECL_RollController				_roll_ctrl;
 	ECL_PitchController				_pitch_ctrl;
@@ -326,10 +343,15 @@ private:
 	 */
 	void		vehicle_status_poll();
 
-	/**
-	 * Check for vehicle land detected updates.
-	 */
-	void		vehicle_land_detected_poll();
+        /**
+         * Check for vehicle land detected updates.
+         */
+        void		vehicle_land_detected_poll();
+
+        /**
+         * Check for vehicle land detected updates.
+         */
+        void		home_position_poll();
 
 	/**
 	 * Shim for calling task_main from task_create.
@@ -364,6 +386,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_global_pos_sub(-1),
 	_vehicle_status_sub(-1),
 	_vehicle_land_detected_sub(-1),
+        _home_sub(-1),
 
 	/* publications */
 	_rate_sp_pub(nullptr),
@@ -402,6 +425,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_global_pos = {};
 	_vehicle_status = {};
 	_vehicle_land_detected = {};
+        _home_position = {};
 
 
 	_parameter_handles.p_tc = param_find("FW_P_TC");
@@ -688,6 +712,17 @@ FixedwingAttitudeControl::vehicle_land_detected_poll()
 }
 
 void
+FixedwingAttitudeControl::home_position_poll()
+{
+        bool home_updated;
+        orb_check(_home_sub, &home_updated);
+
+        if(home_updated){
+               orb_copy(ORB_ID(home_position),_home_sub, &_home_position);
+        }
+}
+
+void
 FixedwingAttitudeControl::task_main_trampoline(int argc, char *argv[])
 {
 	att_control::g_control->task_main();
@@ -718,6 +753,7 @@ FixedwingAttitudeControl::task_main()
 	vehicle_manual_poll();
 	vehicle_status_poll();
 	vehicle_land_detected_poll();
+        home_position_poll();
 
 	/* wakeup source */
 	px4_pollfd_struct_t fds[2];
@@ -768,21 +804,44 @@ FixedwingAttitudeControl::task_main()
 			/* guard against too large deltaT's */
 			if (deltaT > 1.0f) {
 				deltaT = 0.01f;
-			}
+                        }
 
 			/* load local copies */
 			orb_copy(ORB_ID(control_state), _ctrl_state_sub, &_ctrl_state);
 
+                        /* get current rotation matrix and euler angles from control state quaternions */
+                        math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
+                        _R = q_att.to_dcm();
 
-			/* get current rotation matrix and euler angles from control state quaternions */
-			math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
-			_R = q_att.to_dcm();
+                        math::Vector<3> euler_angles;
+                        euler_angles = _R.to_euler();
+                        _roll    = euler_angles(0);
+                        _pitch   = euler_angles(1);
+                        _yaw     = euler_angles(2);
 
-			math::Vector<3> euler_angles;
-			euler_angles = _R.to_euler();
-			_roll    = euler_angles(0);
-			_pitch   = euler_angles(1);
-			_yaw     = euler_angles(2);
+                        /*convert from global to local and then to spherical frame*/
+                        x_inert=float(_global_pos.lon-_home_position.lon);
+                        y_inert=float(_global_pos.lat-_home_position.lat);
+                        z_inert=_global_pos.alt-_home_position.alt;
+
+                        local_r_s=sqrtf(x_inert*x_inert+y_inert*y_inert+z_inert*z_inert);
+                        local_phi_s=atan2(y_inert,x_inert);
+                        local_theta_s=atan2(z_inert,sqrtf(x_inert*x_inert+y_inert*y_inert));
+
+                        /*generate the rotation matrix to a spherically tangent frame*/
+                        _R_s.from_euler(0,local_theta_s,local_phi_s);
+
+                        /*compute the rotationstate relativ to this frame*/
+                        _R_relativ=_R*_R_s;
+
+                        /*compute the euler angles relativ to this frame*/
+                        math::Vector<3> euler_angles_s;
+                        euler_angles_s = _R_relativ.to_euler();
+                        _roll_s         = euler_angles_s(0);
+                        _pitch_s        = euler_angles_s(1);
+                        _yaw_s          = euler_angles_s(2);
+
+
 
 			if (_vehicle_status.is_vtol && _parameters.vtol_type == 0) {
 				/* vehicle is a tailsitter, we need to modify the estimated attitude for fw mode
@@ -844,6 +903,8 @@ FixedwingAttitudeControl::task_main()
 			vehicle_status_poll();
 
 			vehicle_land_detected_poll();
+
+                        home_position_poll();
 
 			// the position controller will not emit attitude setpoints in some modes
 			// we need to make sure that this flag is reset
