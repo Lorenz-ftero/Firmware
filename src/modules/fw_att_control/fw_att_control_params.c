@@ -46,6 +46,18 @@
  */
 
 /**
+ * Bank Angle for Traction phase
+ *
+ * @unit s
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_BANK_TR, 0.1f);
+
+/**
  * Attitude Roll Time Constant
  *
  * This defines the latency between a roll step input and the achieved setpoint

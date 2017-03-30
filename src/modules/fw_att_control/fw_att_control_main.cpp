@@ -217,6 +217,7 @@ private:
 		float flaperon_scale;			/**< Scale factor for flaperons */
 
 		int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
+                float bank_angle;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -268,6 +269,7 @@ private:
 		param_t flaperon_scale;
 
 		param_t vtol_type;
+                param_t bank_angle;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
@@ -452,6 +454,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_parameter_handles.flaperon_scale = param_find("FW_FLAPERON_SCL");
 
 	_parameter_handles.vtol_type = param_find("VT_TYPE");
+        _parameter_handles.bank_angle = param_find("FW_BANK_TR");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -543,6 +546,7 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
 	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
+        param_get(_parameter_handles.bank_angle, &_parameters.bank_angle)
 
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
@@ -972,9 +976,9 @@ FixedwingAttitudeControl::task_main()
 				yaw_sp = _att_sp.yaw_body;
 				throttle_sp = _att_sp.thrust;
 
-                /*if in traction mode set a const roll_sp*/
+                /*if in traction mode set a predefined roll_sp*/
                  if(_vcontrol_mode.flag_control_tractionphase_enabled){
-                     roll_sp = .1;
+                     roll_sp = _parameters.bank_angle;
                  }
 
 				/* allow manual yaw in manual modes */
