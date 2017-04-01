@@ -443,8 +443,7 @@ void Tailsitter::fill_actuator_outputs()
 		_actuators_out_0->control[actuator_controls_s::INDEX_YAW] = _actuators_mc_in->control[actuator_controls_s::INDEX_YAW];
 		_actuators_out_0->control[actuator_controls_s::INDEX_THROTTLE] =
 			_actuators_mc_in->control[actuator_controls_s::INDEX_THROTTLE];
-
-		_actuators_out_1->timestamp = _actuators_mc_in->timestamp;
+       _actuators_out_1->timestamp = _actuators_mc_in->timestamp;
 
 		if (_params->elevons_mc_lock == 1) {
 			_actuators_out_1->control[0] = 0;
@@ -453,9 +452,11 @@ void Tailsitter::fill_actuator_outputs()
 		} else {
 			// NOTE: There is no mistake in the line below, multicopter yaw axis is controlled by elevon roll actuation!
 			_actuators_out_1->control[actuator_controls_s::INDEX_ROLL] =
-				_actuators_mc_in->control[actuator_controls_s::INDEX_YAW];	//roll elevon
+                _actuators_mc_in->control[actuator_controls_s::INDEX_YAW];	//roll ailerons
 			_actuators_out_1->control[actuator_controls_s::INDEX_PITCH] =
-				_actuators_mc_in->control[actuator_controls_s::INDEX_PITCH];	//pitch elevon
+                _actuators_mc_in->control[actuator_controls_s::INDEX_PITCH];	//pitch ailerons
+            /*Add new Index to differentiate for elevons pitch and ailerons pitch control*/
+            _actuators_out_1->control[actuator_controls_s::INDEX_PITCH_ELEVATOR]=_actuators_mc_in->control[actuator_controls_s::INDEX_PITCH];
 		}
 
 		break;
@@ -470,9 +471,11 @@ void Tailsitter::fill_actuator_outputs()
 			_actuators_fw_in->control[actuator_controls_s::INDEX_THROTTLE];
 
 		_actuators_out_1->control[actuator_controls_s::INDEX_ROLL] =
-			-_actuators_fw_in->control[actuator_controls_s::INDEX_ROLL];	// roll elevon
-		_actuators_out_1->control[actuator_controls_s::INDEX_PITCH] =
-			_actuators_fw_in->control[actuator_controls_s::INDEX_PITCH] + _params->fw_pitch_trim;	// pitch elevon
+            -_actuators_fw_in->control[actuator_controls_s::INDEX_ROLL];	// roll airlerons
+        _actuators_out_1->control[actuator_controls_s::INDEX_PITCH] =0;     // pitch airlerons shut of
+        /*Add elvator pitch control in FW mode*/
+        _actuators_out_1->control[actuator_controls_s::INDEX_PITCH_ELEVATOR]=_actuators_fw_in->control[actuator_controls_s::INDEX_PITCH]+_params->fw_pitch_trim;
+
 		_actuators_out_1->control[actuator_controls_s::INDEX_YAW] =
 			_actuators_fw_in->control[actuator_controls_s::INDEX_YAW];	// yaw
 		_actuators_out_1->control[actuator_controls_s::INDEX_THROTTLE] =
