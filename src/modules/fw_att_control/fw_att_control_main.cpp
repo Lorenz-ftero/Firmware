@@ -72,6 +72,7 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
 #include <uORB/topics/home_position.h>
+#include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/traction_status.h>
 #include <systemlib/param/param.h>
 #include <systemlib/err.h>
@@ -135,6 +136,7 @@ private:
 	int 		_params_sub;			/**< notification of parameter updates */
 	int 		_manual_sub;			/**< notification of manual control updates */
 	int		_global_pos_sub;		/**< global position subscription */
+        int             _local_pos_sub;
 	int		_vehicle_status_sub;		/**< vehicle status subscription */
 	int		_vehicle_land_detected_sub;	/**< vehicle land detected subscription */
         int             _home_sub;
@@ -162,6 +164,7 @@ private:
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
         struct home_position_s                          _home_position;
         struct traction_status_s                        _traction_status;
+        struct vehicle_local_position_s                 _vehicle_local_position;
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 	perf_counter_t	_nonfinite_input_perf;		/**< performance counter for non finite input */
@@ -334,12 +337,17 @@ private:
 	/**
 	 * Check for set triplet updates.
 	 */
-	void		vehicle_setpoint_poll();
+        void		vehicle_setpoint_poll();
 
-	/**
-	 * Check for global position updates.
-	 */
-	void		global_pos_poll();
+        /**
+         * Check for global position updates.
+         */
+        void		global_pos_poll();
+
+        /**
+         * Check for global position updates.
+         */
+        void		local_pos_poll();
 
 	/**
 	 * Check for vehicle status updates.
@@ -387,6 +395,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_params_sub(-1),
 	_manual_sub(-1),
 	_global_pos_sub(-1),
+        _local_pos_sub(-1),
 	_vehicle_status_sub(-1),
 	_vehicle_land_detected_sub(-1),
         _home_sub(-1),
@@ -413,7 +422,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 #endif
 	/* states */
 	_setpoint_valid(false),
-	_debug(false),
+        _debug(false),
 	_flaps_applied(0),
 	_flaperons_applied(0)
 {
@@ -427,6 +436,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_actuators = {};
 	_actuators_airframe = {};
 	_global_pos = {};
+        _vehicle_local_position = {};
 	_vehicle_status = {};
 	_vehicle_land_detected = {};
         _home_position = {};
@@ -669,13 +679,25 @@ FixedwingAttitudeControl::vehicle_setpoint_poll()
 void
 FixedwingAttitudeControl::global_pos_poll()
 {
-	/* check if there is a new global position */
-	bool global_pos_updated;
-	orb_check(_global_pos_sub, &global_pos_updated);
+        /* check if there is a new global position */
+        bool global_pos_updated;
+        orb_check(_global_pos_sub, &global_pos_updated);
 
-	if (global_pos_updated) {
-		orb_copy(ORB_ID(vehicle_global_position), _global_pos_sub, &_global_pos);
-	}
+        if (global_pos_updated) {
+                orb_copy(ORB_ID(vehicle_global_position), _global_pos_sub, &_global_pos);
+        }
+}
+
+void
+FixedwingAttitudeControl::local_pos_poll()
+{
+        /* check if there is a new global position */
+        bool local_pos_updated;
+        orb_check(_local_pos_sub, &local_pos_updated);
+
+        if (global_pos_updated) {
+                orb_copy(ORB_ID(vehicle_local_position), _local_pos_sub, &_vehicle_local_position);
+        }
 }
 
 void
@@ -746,6 +768,7 @@ FixedwingAttitudeControl::task_main()
 	_params_sub = orb_subscribe(ORB_ID(parameter_update));
 	_manual_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
 	_global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+        _local_pos_sub = orb_subscribe(ORB_ID(vehicle_local_position));
 	_vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	_vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 
@@ -769,7 +792,7 @@ FixedwingAttitudeControl::task_main()
 	fds[1].fd = _ctrl_state_sub;
 	fds[1].events = POLLIN;
 
-	_task_running = true;
+        _task_running = true;
 
 	while (!_task_should_exit) {
 		static int loop_counter = 0;
@@ -797,8 +820,10 @@ FixedwingAttitudeControl::task_main()
 			orb_copy(ORB_ID(parameter_update), _params_sub, &update);
 
 			/* update parameters from storage */
-			parameters_update();
-		}
+                        parameters_update();
+                }
+
+                //warnx("after param update %.4f", double(_parameters.bank_angle));
 
 		/* only run controller if attitude changed */
 		if (fds[1].revents & POLLIN) {
@@ -924,6 +949,8 @@ FixedwingAttitudeControl::task_main()
 			vehicle_manual_poll();
 
 			global_pos_poll();
+
+                        local_pos_poll;
 
 			vehicle_status_poll();
 
@@ -1064,7 +1091,7 @@ FixedwingAttitudeControl::task_main()
 
                 /*if in traction mode set a predefined roll_sp*/
                  if(_vcontrol_mode.flag_control_tractionphase_enabled){
-                     roll_sp = _parameters.bank_angle;
+                     roll_sp = float(_parameters.bank_angle);
                  }
 
 				/* allow manual yaw in manual modes */
