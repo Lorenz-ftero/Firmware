@@ -927,6 +927,10 @@ MulticopterAttitudeControl::task_main()
 				}
 			}
 
+            if(_v_control_mode.flag_control_transition_ftero_enabled){
+                pitch_sp=0.3;
+            }
+
 			if (_v_control_mode.flag_control_attitude_enabled) {
 
 				if (_ts_opt_recovery == nullptr) {

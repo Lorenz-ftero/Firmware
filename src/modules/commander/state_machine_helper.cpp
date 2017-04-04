@@ -376,6 +376,11 @@ main_state_transition(struct vehicle_status_s *status, main_state_t new_main_sta
 		ret = TRANSITION_CHANGED;
 		break;
 
+    case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
+        ret = TRANSITION_CHANGED;
+        PX4_INFO("INTO FTERO TRACTION")
+        break;
+
 	case commander_state_s::MAIN_STATE_ACRO:
 	case commander_state_s::MAIN_STATE_RATTITUDE:
 		if (status->is_rotary_wing) {
@@ -668,6 +673,7 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 	case commander_state_s::MAIN_STATE_MANUAL:
 	case commander_state_s::MAIN_STATE_RATTITUDE:
 	case commander_state_s::MAIN_STATE_STAB:
+    case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
 	case commander_state_s::MAIN_STATE_ALTCTL:
 
 		/* require RC for all manual modes */
@@ -704,6 +710,10 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 			case commander_state_s::MAIN_STATE_STAB:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
 				break;
+
+            case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
+                status->nav_state = vehicle_status_s::NAVIGATION_STATE_AUTO_TRANSITION_FTERO;
+                break;
 
 			case commander_state_s::MAIN_STATE_ALTCTL:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_ALTCTL;

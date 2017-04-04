@@ -49,6 +49,8 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/vtol_vehicle_status.h>
 
 __EXPORT int px4_simple_app_main(int argc, char *argv[]);
 
