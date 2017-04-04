@@ -227,6 +227,9 @@ private:
 
 		int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
                 float bank_angle;
+                float preview_c;
+                float radius_ref;
+                float p_gain_roll;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -279,6 +282,9 @@ private:
 
 		param_t vtol_type;
                 param_t bank_angle;
+                param_t preview_c;
+                param_t radius_ref;
+                param_t p_gain_roll;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
@@ -291,6 +297,10 @@ private:
         float x_inert;
         float y_inert;
         float z_inert;
+
+        float alpha;
+
+        float angle_error;
 
         float local_r_s;
         float local_theta_s;
@@ -494,6 +504,9 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 
 	_parameter_handles.vtol_type = param_find("VT_TYPE");
         _parameter_handles.bank_angle = param_find("FW_BANK_TR");
+        _parameter_handles.preview_c = param_find("FW_PRE_TR");
+        _parameter_handles.radius_ref = param_find("FW_RAD1_TR");
+        _parameter_handles.p_gain_roll = param_find("FW_P_ROLL_TR");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -584,9 +597,11 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.flaps_scale, &_parameters.flaps_scale);
 	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
-	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
+        param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
         param_get(_parameter_handles.bank_angle, &_parameters.bank_angle);
-
+        param_get(_parameter_handles.preview_c, &_parameters.preview_c);
+        param_get(_parameter_handles.radius_ref, &_parameters.radius_ref);
+        param_get(_parameter_handles.p_gain_roll, &_parameters.p_gain_roll);
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
 	_pitch_ctrl.set_k_p(_parameters.p_p);
@@ -695,7 +710,7 @@ FixedwingAttitudeControl::local_pos_poll()
         bool local_pos_updated;
         orb_check(_local_pos_sub, &local_pos_updated);
 
-        if (global_pos_updated) {
+        if (local_pos_updated) {
                 orb_copy(ORB_ID(vehicle_local_position), _local_pos_sub, &_vehicle_local_position);
         }
 }
@@ -779,7 +794,9 @@ FixedwingAttitudeControl::task_main()
 	vehicle_accel_poll();
 	vehicle_control_mode_poll();
 	vehicle_manual_poll();
-	vehicle_status_poll();
+        vehicle_status_poll();
+        global_pos_poll();
+        local_pos_poll();
 	vehicle_land_detected_poll();
         home_position_poll();
 
@@ -823,8 +840,6 @@ FixedwingAttitudeControl::task_main()
                         parameters_update();
                 }
 
-                //warnx("after param update %.4f", double(_parameters.bank_angle));
-
 		/* only run controller if attitude changed */
 		if (fds[1].revents & POLLIN) {
 			static uint64_t last_run = 0;
@@ -850,26 +865,48 @@ FixedwingAttitudeControl::task_main()
                         _yaw     = euler_angles(2);
 
                         /*convert from global to local and then to spherical frame*/
-                        x_inert=float(_global_pos.lon-_home_position.lon);
-                        y_inert=float(_global_pos.lat-_home_position.lat);
-                        z_inert=_global_pos.alt-_home_position.alt;
+                        x_inert=_vehicle_local_position.x-_home_position.x;
+                        y_inert=_vehicle_local_position.y-_home_position.y;
+                        z_inert=_vehicle_local_position.z-_home_position.z;
+
+
+
+                        alpha = atan(x_inert/y_inert);
+
+                        math::Vector<2> velocity_tan;
+                        velocity_tan(0)=_vehicle_local_position.vx;
+                        velocity_tan(1)=_vehicle_local_position.vy;
+                        math::Vector<2> velocity_tan2=velocity_tan;
+                        velocity_tan.normalize();
+
+                        math::Vector<2> heading_ref;
+                        heading_ref(0)=double(_parameters.radius_ref)*cos(alpha+_parameters.preview_c)-double(x_inert);
+                        heading_ref(1)=double(_parameters.radius_ref)*sin(alpha+_parameters.preview_c)-double(y_inert);
+                        math::Vector<2> heading_ref2=heading_ref;
+                        heading_ref.normalize();
+
+                        angle_error = acos(velocity_tan*heading_ref);
+
+
+                        /*
 
                         local_r_s=sqrtf(x_inert*x_inert+y_inert*y_inert+z_inert*z_inert);
                         local_phi_s=atan2(y_inert,x_inert);
                         local_theta_s=atan2(z_inert,sqrtf(x_inert*x_inert+y_inert*y_inert));
 
-                        /*generate the rotation matrix to a spherically tangent frame*/
+                        //generate the rotation matrix to a spherically tangent frame
                         _R_s.from_euler(0,local_theta_s,local_phi_s);
 
-                        /*compute the rotationstate relativ to this frame*/
+                        //compute the rotationstate relativ to this frame
                         _R_relativ=_R*_R_s;
 
-                        /*compute the euler angles relativ to this frame*/
+                        //compute the euler angles relativ to this frame
                         math::Vector<3> euler_angles_s;
                         euler_angles_s = _R_relativ.to_euler();
                         _roll_s         = euler_angles_s(0);
                         _pitch_s        = euler_angles_s(1);
                         _yaw_s          = euler_angles_s(2);
+                        */
 
                         _traction_status.pos_inert[0]=x_inert;
                         _traction_status.pos_inert[1]=y_inert;
@@ -950,7 +987,7 @@ FixedwingAttitudeControl::task_main()
 
 			global_pos_poll();
 
-                        local_pos_poll;
+                        local_pos_poll();
 
 			vehicle_status_poll();
 
@@ -1091,7 +1128,10 @@ FixedwingAttitudeControl::task_main()
 
                 /*if in traction mode set a predefined roll_sp*/
                  if(_vcontrol_mode.flag_control_tractionphase_enabled){
-                     roll_sp = float(_parameters.bank_angle);
+                     //roll_sp = float(_parameters.bank_angle);
+                         roll_sp = _parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+                         pitch_sp = 0;
+                         _att_sp.thrust = _manual.z;
                  }
 
 				/* allow manual yaw in manual modes */
