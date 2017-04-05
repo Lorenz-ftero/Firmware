@@ -378,7 +378,7 @@ main_state_transition(struct vehicle_status_s *status, main_state_t new_main_sta
 
     case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
         ret = TRANSITION_CHANGED;
-        PX4_INFO("INTO FTERO TRACTION")
+        PX4_INFO("INTO FTERO TRANSITION");
         break;
 
 	case commander_state_s::MAIN_STATE_ACRO:

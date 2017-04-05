@@ -510,7 +510,7 @@ int commander_main(int argc, char *argv[])
 				new_main_state = commander_state_s::MAIN_STATE_ALTCTL;
 			} else if (!strcmp(argv[2], "posctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_POSCTL;
-            } else if (!strcmp(argv[2], "transition ftero")) {
+            } else if (!strcmp(argv[2], "transition_ftero")) {
                 new_main_state = commander_state_s::MAIN_STATE_TRANSITION_FTERO;
             } else if (!strcmp(argv[2], "auto:mission")) {
 				new_main_state = commander_state_s::MAIN_STATE_AUTO_MISSION;

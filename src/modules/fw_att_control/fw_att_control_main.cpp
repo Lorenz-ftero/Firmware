@@ -977,6 +977,10 @@ FixedwingAttitudeControl::task_main()
 					yaw_manual = _manual.r;
 				}
 
+                if(_vcontrol_mode.flag_control_transition_ftero_enabled){
+                    pitch_sp= 0.4;
+                }
+
 				/* reset integrals where needed */
 				if (_att_sp.roll_reset_integral) {
 					_roll_ctrl.reset_integrator();
