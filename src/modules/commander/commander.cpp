@@ -508,8 +508,8 @@ int commander_main(int argc, char *argv[])
 				new_main_state = commander_state_s::MAIN_STATE_MANUAL;
 			} else if (!strcmp(argv[2], "altctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_ALTCTL;
-            } else if (!strcmp(argv[2], "traction")) {
-                new_main_state = commander_state_s::MAIN_STATE_AUTO_TRACTION;
+                        } else if (!strcmp(argv[2], "traction")) {
+                                new_main_state = commander_state_s::MAIN_STATE_AUTO_TRACTION;
 			} else if (!strcmp(argv[2], "posctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_POSCTL;
 			} else if (!strcmp(argv[2], "auto:mission")) {
