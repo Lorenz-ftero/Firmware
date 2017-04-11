@@ -297,7 +297,7 @@ private:
 	/**
 	 * Check for changes in vehicle control mode.
 	 */
-	void		vehicle_control_mode_poll();
+    void		vehicle_control_mode_poll();
 
 	/**
 	 * Check for changes in manual inputs.
@@ -332,7 +332,7 @@ private:
 	/**
 	 * Shim for calling task_main from task_create.
 	 */
-	static void	task_main_trampoline(int argc, char *argv[]);
+    static void	task_main_trampoline(int argc, char *argv[]);
 
 	/**
 	 * Main attitude controller collection task.
@@ -978,7 +978,18 @@ FixedwingAttitudeControl::task_main()
 				}
 
                 if(_vcontrol_mode.flag_control_transition_ftero_enabled){
-                    pitch_sp= 0.4;
+
+                    uint64_t start_transition=hrt_abstime();
+                    double dt=hrt_elapsed_time(&start_transition);
+                    double duration_transition=5*100000;
+                    while (dt<duration_transition) {
+                        pitch_sp=0.4*dt/duration_transition;
+                        dt=hrt_elapsed_time(&start_transition);
+                    }
+                    pitch_sp=0;
+                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
+
+
                 }
 
 				/* reset integrals where needed */
@@ -996,7 +1007,7 @@ FixedwingAttitudeControl::task_main()
 				}
 
 				/* If the aircraft is on ground reset the integrators */
-				if (_vehicle_land_detected.landed || _vehicle_status.is_rotary_wing) {
+                if (_vehicle_land_detected.landed || _vehicle_status.is_rotary_wing) {
 					_roll_ctrl.reset_integrator();
 					_pitch_ctrl.reset_integrator();
 					_yaw_ctrl.reset_integrator();
