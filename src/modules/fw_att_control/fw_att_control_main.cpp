@@ -979,15 +979,18 @@ FixedwingAttitudeControl::task_main()
 
                 if(_vcontrol_mode.flag_control_transition_ftero_enabled){
 
-                    uint64_t start_transition=hrt_abstime();
+                    /*uint64_t start_transition=hrt_abstime();
                     double dt=hrt_elapsed_time(&start_transition);
                     double duration_transition=5*100000;
                     while (dt<duration_transition) {
                         pitch_sp=0.4*dt/duration_transition;
+                        PX4_INFO("test");
                         dt=hrt_elapsed_time(&start_transition);
                     }
                     pitch_sp=0;
-                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
+                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;*/
+                    roll_sp=0.3;
+                    pitch_sp=0.2;
 
 
                 }
