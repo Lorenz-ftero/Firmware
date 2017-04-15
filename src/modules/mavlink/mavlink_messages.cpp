@@ -145,10 +145,11 @@ void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_st
 					   | (status->is_rotary_wing ? MAV_MODE_FLAG_STABILIZE_ENABLED : 0);
 		custom_mode.main_mode = PX4_CUSTOM_MAIN_MODE_MANUAL;
 		break;
+/* unsure if mavlink_base_mode correctly set*/
     case vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO:
         *mavlink_base_mode |= MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
          custom_mode.main_mode = PX4_CUSTOM_MAIN_MODE_TRANSITION_FTERO;
-         break
+        break;
 
 	case vehicle_status_s::NAVIGATION_STATE_ACRO:
 		*mavlink_base_mode |= MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;

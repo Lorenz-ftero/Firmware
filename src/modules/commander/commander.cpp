@@ -510,7 +510,7 @@ int commander_main(int argc, char *argv[])
 				new_main_state = commander_state_s::MAIN_STATE_ALTCTL;
 			} else if (!strcmp(argv[2], "posctl")) {
 				new_main_state = commander_state_s::MAIN_STATE_POSCTL;
-            } else if (!strcmp(argv[2], "transition_ftero")) {
+            } else if (!strcmp(argv[2], "transitionftero")) {
                 new_main_state = commander_state_s::MAIN_STATE_TRANSITION_FTERO;
             } else if (!strcmp(argv[2], "auto:mission")) {
 				new_main_state = commander_state_s::MAIN_STATE_AUTO_MISSION;
@@ -754,9 +754,9 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 					/* ALTCTL */
 					main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_ALTCTL, main_state_prev, &status_flags, &internal_state);
 
-                }else if (custom main mode == PX4_CUSTOM_MAIN_MODE_TRANSITION_FTERO){
-                    /* Transition_ftero*/
-                    main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_TRANSITION_FTERO, main_state_prev, &status_flags, &internal_state);
+                                }else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_TRANSITION_FTERO){
+                                 /* transitionftero*/
+                                main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_TRANSITION_FTERO, main_state_prev, &status_flags, &internal_state);
 
 				} else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
 					/* POSCTL */
@@ -3616,7 +3616,7 @@ set_control_mode()
         control_mode.flag_control_attitude_enabled = true;
         control_mode.flag_control_rattitude_enabled = false;
         control_mode.flag_control_altitude_enabled = false;
-        control_mode.flag_control_climb_rate_enabled = true;
+        control_mode.flag_control_climb_rate_enabled = false;
         control_mode.flag_control_position_enabled = false;
         control_mode.flag_control_velocity_enabled = false;
         control_mode.flag_control_acceleration_enabled = false;
