@@ -754,6 +754,10 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 					/* ALTCTL */
 					main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_ALTCTL, main_state_prev, &status_flags, &internal_state);
 
+                }else if (custom main mode == PX4_CUSTOM_MAIN_MODE_TRANSITION_FTERO){
+                    /* Transition_ftero*/
+                    main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_TRANSITION_FTERO, main_state_prev, &status_flags, &internal_state);
+
 				} else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
 					/* POSCTL */
 					main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_POSCTL, main_state_prev, &status_flags, &internal_state);
@@ -3605,7 +3609,7 @@ set_control_mode()
         control_mode.flag_control_transition_ftero_enabled=false;
 		break;
 
-    case vehicle_status_s::NAVIGATION_STATE_AUTO_TRANSITION_FTERO:
+    case vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO:
         control_mode.flag_control_manual_enabled=true;
         control_mode.flag_control_auto_enabled = false;
         control_mode.flag_control_rates_enabled = true;
