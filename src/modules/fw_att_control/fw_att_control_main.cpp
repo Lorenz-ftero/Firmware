@@ -979,6 +979,9 @@ FixedwingAttitudeControl::task_main()
 
                 if(_vcontrol_mode.flag_control_transition_ftero_enabled){
 
+                    /* Currently only used for simple switch between mc and fw*/
+
+
                     /*uint64_t start_transition=hrt_abstime();
                     double dt=hrt_elapsed_time(&start_transition);
                     double duration_transition=5*100000;
@@ -988,9 +991,11 @@ FixedwingAttitudeControl::task_main()
                         dt=hrt_elapsed_time(&start_transition);
                     }
                     pitch_sp=0;
-                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;*/
+                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
                     roll_sp=0.3;
                     pitch_sp=0.2;
+                    */
+
 
 
                 }
