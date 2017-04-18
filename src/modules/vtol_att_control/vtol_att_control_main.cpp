@@ -480,13 +480,13 @@ VtolAttitudeControl::is_fixed_wing_requested()
         /*for verification tests*/
         /*PX4_INFO("INTO TRANSITION AND MULITCOPTER");*/
     }
-    if(_v_control_mode.flag_control_traction_ftero_enabled){
+     if(_v_control_mode.flag_control_traction_ftero_enabled){
         to_fw=true;
         /*PX4_INFO("INTO TRACTION AND FIXED WING");*/
-
     }
-
-
+    if(_v_control_mode.flag_control_altitude_enabled){
+        to_fw=false;
+    }
 	// handle abort request
 	if (_abort_front_transition) {
 		if (to_fw) {

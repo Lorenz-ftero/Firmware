@@ -996,6 +996,7 @@ FixedwingAttitudeControl::task_main()
                     roll_sp=0.2;
                     pitch_sp=0.1;
                     */
+                    pitch_sp=0.8;
                     PX4_INFO("INTO TRANSITION fw_att");
 
 

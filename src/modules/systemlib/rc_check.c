@@ -69,14 +69,15 @@ int rc_calibration_check(orb_advert_t *mavlink_log_pub, bool report_fail, bool i
 	unsigned j = 0;
 
 	/* if VTOL, check transition switch mapping */
-	if (isVTOL) {
+    /*if (isVTOL) {
 		param_t trans_parm = param_find("RC_MAP_TRANS_SW");
 
 		if (trans_parm == PARAM_INVALID) {
 			if (report_fail) { mavlink_log_critical(mavlink_log_pub, "ERR: RC_MAP_TRANS_SW PARAMETER MISSING"); }
 
-			/* give system time to flush error message in case there are more */
-			usleep(100000);
+        comment: give system time to flush error message in case there are more
+
+            usleep(100000);
 			map_fail_count++;
 
 		} else {
@@ -91,7 +92,7 @@ int rc_calibration_check(orb_advert_t *mavlink_log_pub, bool report_fail, bool i
 
 		}
 
-	}
+    }*/
 
 
 	/* first check channel mappings */
