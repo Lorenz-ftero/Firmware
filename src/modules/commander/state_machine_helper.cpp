@@ -679,6 +679,7 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 	case commander_state_s::MAIN_STATE_RATTITUDE:
 	case commander_state_s::MAIN_STATE_STAB:
     case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
+    case commander_state_s::MAIN_STATE_TRACTION_FTERO:
 	case commander_state_s::MAIN_STATE_ALTCTL:
 
 		/* require RC for all manual modes */
@@ -720,7 +721,10 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
                 status->nav_state = vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO;
                 break;
 
-			case commander_state_s::MAIN_STATE_ALTCTL:
+            case commander_state_s::MAIN_STATE_TRACTION_FTERO:
+                status->nav_state = vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO;
+
+            case commander_state_s::MAIN_STATE_ALTCTL:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_ALTCTL;
 				break;
 

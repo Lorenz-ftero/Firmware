@@ -428,6 +428,7 @@ PARAM_DEFINE_INT32(COM_FLTMODE3, -1);
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE4, -1);
 
@@ -452,6 +453,7 @@ PARAM_DEFINE_INT32(COM_FLTMODE4, -1);
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE5, -1);
 
@@ -476,6 +478,7 @@ PARAM_DEFINE_INT32(COM_FLTMODE5, -1);
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE6, -1);
 

@@ -992,12 +992,19 @@ FixedwingAttitudeControl::task_main()
                     }
                     pitch_sp=0;
                     status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
-                    roll_sp=0.3;
-                    pitch_sp=0.2;
+
+                    roll_sp=0.2;
+                    pitch_sp=0.1;
                     */
+                    PX4_INFO("INTO TRANSITION fw_att");
 
 
 
+
+                }
+
+                if(_vcontrol_mode.flag_control_traction_ftero_enabled){
+                PX4_INFO("INTO TRACTION fw_att");
                 }
 
 				/* reset integrals where needed */

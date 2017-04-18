@@ -760,7 +760,9 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
                      /* transitionftero*/
                     main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_TRANSITION_FTERO, main_state_prev, &status_flags, &internal_state);
 
-                /*} else if (custom_main_m == PX4_CUSTOM_MAIN_MO)*/
+                } else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_TRACTION_FTERO){
+                    /* tractionftero*/
+                    main_ret = main_state_transition(status_local, commander_state_s::MAIN_STATE_TRACTION_FTERO, main_state_prev, &status_flags, &internal_state);
 
 				} else if (custom_main_mode == PX4_CUSTOM_MAIN_MODE_POSCTL) {
 					/* POSCTL */
@@ -3618,34 +3620,38 @@ set_control_mode()
         break;
 
    case vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO:
-        control_mode.flag_control_manual_enabled=true;
+        control_mode.flag_control_manual_enabled = true;
         control_mode.flag_control_auto_enabled = false;
-        control_mode.flag_control_rates_enabled = false;
-        control_mode.flag_control_attitude_enabled = false;
-        control_mode.flag_control_rattitude_enabled = false;
+        control_mode.flag_control_rates_enabled = true;
+        control_mode.flag_control_attitude_enabled = true;
+        control_mode.flag_control_rattitude_enabled = true;
         control_mode.flag_control_altitude_enabled = false;
         control_mode.flag_control_climb_rate_enabled = false;
         control_mode.flag_control_position_enabled = false;
         control_mode.flag_control_velocity_enabled = false;
         control_mode.flag_control_acceleration_enabled = false;
         control_mode.flag_control_termination_enabled = false;
-        control_mode.flag_control_transition_ftero_enabled = true;
+        control_mode.flag_control_transition_ftero_enabled=true;
+        /* override is not ok in stabilized mode */
+        control_mode.flag_external_manual_override_ok = false;
         control_mode.flag_control_traction_ftero_enabled = false;
         break;
 
     case vehicle_status_s::NAVIGATION_STATE_TRACTION_FTERO:
-        control_mode.flag_control_manual_enabled=true;
+        control_mode.flag_control_manual_enabled = true;
         control_mode.flag_control_auto_enabled = false;
         control_mode.flag_control_rates_enabled = true;
         control_mode.flag_control_attitude_enabled = true;
-        control_mode.flag_control_rattitude_enabled = false;
+        control_mode.flag_control_rattitude_enabled = true;
         control_mode.flag_control_altitude_enabled = false;
         control_mode.flag_control_climb_rate_enabled = false;
         control_mode.flag_control_position_enabled = false;
         control_mode.flag_control_velocity_enabled = false;
         control_mode.flag_control_acceleration_enabled = false;
         control_mode.flag_control_termination_enabled = false;
-        control_mode.flag_control_transition_ftero_enabled = false;
+        control_mode.flag_control_transition_ftero_enabled=false;
+        /* override is not ok in stabilized mode */
+        control_mode.flag_external_manual_override_ok = false;
         control_mode.flag_control_traction_ftero_enabled = true;
         break;
 
