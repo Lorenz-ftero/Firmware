@@ -2338,6 +2338,7 @@ int sdlog2_thread_main(int argc, char *argv[])
                         log_msg.body.log_TRST.roll_s = buf.traction_status.att_relativ[0];
                         log_msg.body.log_TRST.pitch_s = buf.traction_status.att_relativ[1];
                         log_msg.body.log_TRST.yaw_s = buf.traction_status.att_relativ[2];
+                        log_msg.body.log_TRST.roll_t = buf.traction_status.roll_target;
                         LOGBUFFER_WRITE_AND_COUNT(TRST);
                 }
 

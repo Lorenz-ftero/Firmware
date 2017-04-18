@@ -302,6 +302,8 @@ private:
 
         float angle_error;
 
+        float target_roll;
+
         float local_r_s;
         float local_theta_s;
         float local_phi_s;
@@ -887,6 +889,8 @@ FixedwingAttitudeControl::task_main()
 
                         angle_error = acos(velocity_tan*heading_ref);
 
+                        target_roll = _parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+
 
                         /*
 
@@ -912,13 +916,15 @@ FixedwingAttitudeControl::task_main()
                         _traction_status.pos_inert[1]=y_inert;
                         _traction_status.pos_inert[2]=z_inert;
 
-                        _traction_status.pos_local_sphere[0]=local_r_s;
-                        _traction_status.pos_local_sphere[1]=local_phi_s;
-                        _traction_status.pos_local_sphere[2]=local_theta_s;
+                        _traction_status.roll_target = target_roll;
 
-                        _traction_status.att_relativ[0]=_roll_s;
-                        _traction_status.att_relativ[1]=_pitch_s;
-                        _traction_status.att_relativ[2]=_yaw_s;
+                        //_traction_status.pos_local_sphere[0]=local_r_s;
+                        //_traction_status.pos_local_sphere[1]=local_phi_s;
+                        //_traction_status.pos_local_sphere[2]=local_theta_s;
+
+                        //_traction_status.att_relativ[0]=_roll_s;
+                        //_traction_status.att_relativ[1]=_pitch_s;
+                        //_traction_status.att_relativ[2]=_yaw_s;
 
                         _traction_status.timestamp=hrt_absolute_time();
 
@@ -1132,7 +1138,13 @@ FixedwingAttitudeControl::task_main()
                                 if(_vcontrol_mode.flag_control_attitude_enabled){//flag_control_tractionphase_enabled){
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
-                                        roll_sp = .3;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+                                        if(PX4_ISFINITE(target_roll)){
+                                                roll_sp=PX4_ISFINITE(roll_sp);
+                                                warnx("roll target finite");
+                                        }else{
+                                                roll_sp = .3;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+                                                warnx("roll target infinite, used 0 instead");
+                                        }
                                         pitch_sp = 0;
                                         _att_sp.thrust = _manual.z;
                                 }

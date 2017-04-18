@@ -646,6 +646,7 @@ struct log_TRST_s {
         float roll_s;
         float pitch_s;
         float yaw_s;
+        float roll_t;
 };
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
