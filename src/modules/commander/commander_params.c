@@ -350,12 +350,13 @@ PARAM_DEFINE_INT32(COM_OBL_RC_ACT, 0);
  * @value 10 Takeoff
  * @value 11 Land
  * @value 5 Return
- * @value 6 Transition ftero
+ * @value 6 Acro
  * @value 7 Offboard
  * @value 8 Stabilized
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE1, -1);
 
@@ -380,6 +381,7 @@ PARAM_DEFINE_INT32(COM_FLTMODE1, -1);
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE2, -1);
 
@@ -404,6 +406,7 @@ PARAM_DEFINE_INT32(COM_FLTMODE2, -1);
  * @value 9 Rattitude
  * @value 12 Follow Me
  * @value 13 Transition ftero
+ * @value 14 Traction ftero
  */
 PARAM_DEFINE_INT32(COM_FLTMODE3, -1);
 

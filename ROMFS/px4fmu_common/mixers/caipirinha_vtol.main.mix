@@ -17,13 +17,13 @@ R: 2- 10000 10000 10000 0
 
 Zero mixer (2x)
 ---------------
-Channel 3,4 are unused.
+Channels 3,4 are unused.
 
 Z:
 
 Z:
 
-Elevons/Ailerons mixer
+Elevons mixer
 --------------
 
 Channel 5 connects to the right (starboard) elevon.
