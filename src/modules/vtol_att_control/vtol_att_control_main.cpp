@@ -476,14 +476,11 @@ VtolAttitudeControl::is_fixed_wing_requested()
 		to_fw = (_transition_command == vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW);
 	}
     if(_v_control_mode.flag_control_transition_ftero_enabled){
-        to_fw=false;
-        /*for verification tests*/
-        /*PX4_INFO("INTO TRANSITION AND MULITCOPTER");*/
-    }
-     if(_v_control_mode.flag_control_traction_ftero_enabled){
         to_fw=true;
-        /*PX4_INFO("INTO TRACTION AND FIXED WING");*/
+        /*for verification tests*/
+        PX4_INFO("INTO TRANSITION AND MULITCOPTER");
     }
+
     if(_v_control_mode.flag_control_altitude_enabled){
         to_fw=false;
     }

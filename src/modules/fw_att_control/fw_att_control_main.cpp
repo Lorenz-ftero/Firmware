@@ -1005,6 +1005,8 @@ FixedwingAttitudeControl::task_main()
                 }
 
                 if(_vcontrol_mode.flag_control_traction_ftero_enabled){
+                    pitch_sp=0.8;
+
                 PX4_INFO("INTO TRACTION fw_att");
                 }
 
