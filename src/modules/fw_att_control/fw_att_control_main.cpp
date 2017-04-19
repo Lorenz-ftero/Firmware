@@ -71,6 +71,9 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
+#include <uORB/topics/home_position.h>
+#include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/traction_status.h>
 #include <systemlib/param/param.h>
 #include <systemlib/err.h>
 #include <systemlib/pid/pid.h>
@@ -133,13 +136,16 @@ private:
 	int 		_params_sub;			/**< notification of parameter updates */
 	int 		_manual_sub;			/**< notification of manual control updates */
 	int		_global_pos_sub;		/**< global position subscription */
+        int             _local_pos_sub;
 	int		_vehicle_status_sub;		/**< vehicle status subscription */
 	int		_vehicle_land_detected_sub;	/**< vehicle land detected subscription */
+        int             _home_sub;
 
 	orb_advert_t	_rate_sp_pub;			/**< rate setpoint publication */
 	orb_advert_t	_attitude_sp_pub;		/**< attitude setpoint point */
 	orb_advert_t	_actuators_0_pub;		/**< actuator control group 0 setpoint */
 	orb_advert_t	_actuators_2_pub;		/**< actuator control group 1 setpoint (Airframe) */
+        orb_advert_t    _traction_status_pub;
 
 	orb_id_t _rates_sp_id;	// pointer to correct rates setpoint uORB metadata structure
 	orb_id_t _actuators_id;	// pointer to correct actuator controls0 uORB metadata structure
@@ -156,6 +162,9 @@ private:
 	struct vehicle_global_position_s		_global_pos;		/**< global position */
 	struct vehicle_status_s				_vehicle_status;	/**< vehicle status */
 	struct vehicle_land_detected_s			_vehicle_land_detected;	/**< vehicle land detected */
+        struct home_position_s                          _home_position;
+        struct traction_status_s                        _traction_status;
+        struct vehicle_local_position_s                 _vehicle_local_position;
 
 	perf_counter_t	_loop_perf;			/**< loop performance counter */
 	perf_counter_t	_nonfinite_input_perf;		/**< performance counter for non finite input */
@@ -217,6 +226,10 @@ private:
 		float flaperon_scale;			/**< Scale factor for flaperons */
 
 		int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
+                float bank_angle;
+                float preview_c;
+                float radius_ref;
+                float p_gain_roll;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -268,14 +281,38 @@ private:
 		param_t flaperon_scale;
 
 		param_t vtol_type;
+                param_t bank_angle;
+                param_t preview_c;
+                param_t radius_ref;
+                param_t p_gain_roll;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
-	// Rotation matrix and euler angles to extract from control state
-	math::Matrix<3, 3> _R;
-	float _roll;
-	float _pitch;
-	float _yaw;
+        // Rotation matrix and euler angles to extract from control state
+        math::Matrix<3, 3> _R;
+        float _roll;
+        float _pitch;
+        float _yaw;
+
+        float x_inert;
+        float y_inert;
+        float z_inert;
+
+        float alpha;
+
+        float angle_error;
+
+        float target_roll;
+
+        float local_r_s;
+        float local_theta_s;
+        float local_phi_s;
+
+        math::Matrix<3, 3> _R_s;
+        math::Matrix<3, 3> _R_relativ;
+        float _roll_s;
+        float _pitch_s;
+        float _yaw_s;
 
 	ECL_RollController				_roll_ctrl;
 	ECL_PitchController				_pitch_ctrl;
@@ -297,7 +334,7 @@ private:
 	/**
 	 * Check for changes in vehicle control mode.
 	 */
-    void		vehicle_control_mode_poll();
+	void		vehicle_control_mode_poll();
 
 	/**
 	 * Check for changes in manual inputs.
@@ -312,27 +349,37 @@ private:
 	/**
 	 * Check for set triplet updates.
 	 */
-	void		vehicle_setpoint_poll();
+        void		vehicle_setpoint_poll();
 
-	/**
-	 * Check for global position updates.
-	 */
-	void		global_pos_poll();
+        /**
+         * Check for global position updates.
+         */
+        void		global_pos_poll();
+
+        /**
+         * Check for global position updates.
+         */
+        void		local_pos_poll();
 
 	/**
 	 * Check for vehicle status updates.
 	 */
 	void		vehicle_status_poll();
 
-	/**
-	 * Check for vehicle land detected updates.
-	 */
-	void		vehicle_land_detected_poll();
+        /**
+         * Check for vehicle land detected updates.
+         */
+        void		vehicle_land_detected_poll();
+
+        /**
+         * Check for vehicle land detected updates.
+         */
+        void		home_position_poll();
 
 	/**
 	 * Shim for calling task_main from task_create.
 	 */
-    static void	task_main_trampoline(int argc, char *argv[]);
+	static void	task_main_trampoline(int argc, char *argv[]);
 
 	/**
 	 * Main attitude controller collection task.
@@ -360,14 +407,17 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_params_sub(-1),
 	_manual_sub(-1),
 	_global_pos_sub(-1),
+        _local_pos_sub(-1),
 	_vehicle_status_sub(-1),
 	_vehicle_land_detected_sub(-1),
+        _home_sub(-1),
 
 	/* publications */
 	_rate_sp_pub(nullptr),
 	_attitude_sp_pub(nullptr),
 	_actuators_0_pub(nullptr),
 	_actuators_2_pub(nullptr),
+        _traction_status_pub(nullptr),
 
 	_rates_sp_id(0),
 	_actuators_id(0),
@@ -384,7 +434,7 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 #endif
 	/* states */
 	_setpoint_valid(false),
-	_debug(false),
+        _debug(false),
 	_flaps_applied(0),
 	_flaperons_applied(0)
 {
@@ -398,8 +448,11 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_actuators = {};
 	_actuators_airframe = {};
 	_global_pos = {};
+        _vehicle_local_position = {};
 	_vehicle_status = {};
 	_vehicle_land_detected = {};
+        _home_position = {};
+        _traction_status = {};
 
 
 	_parameter_handles.p_tc = param_find("FW_P_TC");
@@ -452,6 +505,10 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_parameter_handles.flaperon_scale = param_find("FW_FLAPERON_SCL");
 
 	_parameter_handles.vtol_type = param_find("VT_TYPE");
+        _parameter_handles.bank_angle = param_find("FW_BANK_TR");
+        _parameter_handles.preview_c = param_find("FW_PRE_TR");
+        _parameter_handles.radius_ref = param_find("FW_RAD1_TR");
+        _parameter_handles.p_gain_roll = param_find("FW_P_ROLL_TR");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -542,8 +599,11 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.flaps_scale, &_parameters.flaps_scale);
 	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
-	param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
-
+        param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
+        param_get(_parameter_handles.bank_angle, &_parameters.bank_angle);
+        param_get(_parameter_handles.preview_c, &_parameters.preview_c);
+        param_get(_parameter_handles.radius_ref, &_parameters.radius_ref);
+        param_get(_parameter_handles.p_gain_roll, &_parameters.p_gain_roll);
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
 	_pitch_ctrl.set_k_p(_parameters.p_p);
@@ -636,13 +696,25 @@ FixedwingAttitudeControl::vehicle_setpoint_poll()
 void
 FixedwingAttitudeControl::global_pos_poll()
 {
-	/* check if there is a new global position */
-	bool global_pos_updated;
-	orb_check(_global_pos_sub, &global_pos_updated);
+        /* check if there is a new global position */
+        bool global_pos_updated;
+        orb_check(_global_pos_sub, &global_pos_updated);
 
-	if (global_pos_updated) {
-		orb_copy(ORB_ID(vehicle_global_position), _global_pos_sub, &_global_pos);
-	}
+        if (global_pos_updated) {
+                orb_copy(ORB_ID(vehicle_global_position), _global_pos_sub, &_global_pos);
+        }
+}
+
+void
+FixedwingAttitudeControl::local_pos_poll()
+{
+        /* check if there is a new global position */
+        bool local_pos_updated;
+        orb_check(_local_pos_sub, &local_pos_updated);
+
+        if (local_pos_updated) {
+                orb_copy(ORB_ID(vehicle_local_position), _local_pos_sub, &_vehicle_local_position);
+        }
 }
 
 void
@@ -684,6 +756,17 @@ FixedwingAttitudeControl::vehicle_land_detected_poll()
 }
 
 void
+FixedwingAttitudeControl::home_position_poll()
+{
+        bool home_updated;
+        orb_check(_home_sub, &home_updated);
+
+        if(home_updated){
+               orb_copy(ORB_ID(home_position),_home_sub, &_home_position);
+        }
+}
+
+void
 FixedwingAttitudeControl::task_main_trampoline(int argc, char *argv[])
 {
 	att_control::g_control->task_main();
@@ -702,6 +785,7 @@ FixedwingAttitudeControl::task_main()
 	_params_sub = orb_subscribe(ORB_ID(parameter_update));
 	_manual_sub = orb_subscribe(ORB_ID(manual_control_setpoint));
 	_global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+        _local_pos_sub = orb_subscribe(ORB_ID(vehicle_local_position));
 	_vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	_vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 
@@ -712,8 +796,11 @@ FixedwingAttitudeControl::task_main()
 	vehicle_accel_poll();
 	vehicle_control_mode_poll();
 	vehicle_manual_poll();
-	vehicle_status_poll();
+        vehicle_status_poll();
+        global_pos_poll();
+        local_pos_poll();
 	vehicle_land_detected_poll();
+        home_position_poll();
 
 	/* wakeup source */
 	px4_pollfd_struct_t fds[2];
@@ -724,7 +811,7 @@ FixedwingAttitudeControl::task_main()
 	fds[1].fd = _ctrl_state_sub;
 	fds[1].events = POLLIN;
 
-	_task_running = true;
+        _task_running = true;
 
 	while (!_task_should_exit) {
 		static int loop_counter = 0;
@@ -752,8 +839,8 @@ FixedwingAttitudeControl::task_main()
 			orb_copy(ORB_ID(parameter_update), _params_sub, &update);
 
 			/* update parameters from storage */
-			parameters_update();
-		}
+                        parameters_update();
+                }
 
 		/* only run controller if attitude changed */
 		if (fds[1].revents & POLLIN) {
@@ -764,21 +851,90 @@ FixedwingAttitudeControl::task_main()
 			/* guard against too large deltaT's */
 			if (deltaT > 1.0f) {
 				deltaT = 0.01f;
-			}
+                        }
 
 			/* load local copies */
 			orb_copy(ORB_ID(control_state), _ctrl_state_sub, &_ctrl_state);
 
+                        /* get current rotation matrix and euler angles from control state quaternions */
+                        math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
+                        _R = q_att.to_dcm();
 
-			/* get current rotation matrix and euler angles from control state quaternions */
-			math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
-			_R = q_att.to_dcm();
+                        math::Vector<3> euler_angles;
+                        euler_angles = _R.to_euler();
+                        _roll    = euler_angles(0);
+                        _pitch   = euler_angles(1);
+                        _yaw     = euler_angles(2);
 
-			math::Vector<3> euler_angles;
-			euler_angles = _R.to_euler();
-			_roll    = euler_angles(0);
-			_pitch   = euler_angles(1);
-			_yaw     = euler_angles(2);
+                        /*convert from global to local and then to spherical frame*/
+                        x_inert=_vehicle_local_position.x-_home_position.x;
+                        y_inert=_vehicle_local_position.y-_home_position.y;
+                        z_inert=_vehicle_local_position.z-_home_position.z;
+
+
+
+                        alpha = atan(x_inert/y_inert);
+
+                        math::Vector<2> velocity_tan;
+                        velocity_tan(0)=_vehicle_local_position.vx;
+                        velocity_tan(1)=_vehicle_local_position.vy;
+                        math::Vector<2> velocity_tan2=velocity_tan;
+                        velocity_tan.normalize();
+
+                        math::Vector<2> heading_ref;
+                        heading_ref(0)=double(_parameters.radius_ref)*cos(alpha+_parameters.preview_c)-double(x_inert);
+                        heading_ref(1)=double(_parameters.radius_ref)*sin(alpha+_parameters.preview_c)-double(y_inert);
+                        math::Vector<2> heading_ref2=heading_ref;
+                        heading_ref.normalize();
+
+                        angle_error = acos(velocity_tan*heading_ref);
+
+                        target_roll = _parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+
+
+                        /*
+
+                        local_r_s=sqrtf(x_inert*x_inert+y_inert*y_inert+z_inert*z_inert);
+                        local_phi_s=atan2(y_inert,x_inert);
+                        local_theta_s=atan2(z_inert,sqrtf(x_inert*x_inert+y_inert*y_inert));
+
+                        //generate the rotation matrix to a spherically tangent frame
+                        _R_s.from_euler(0,local_theta_s,local_phi_s);
+
+                        //compute the rotationstate relativ to this frame
+                        _R_relativ=_R*_R_s;
+
+                        //compute the euler angles relativ to this frame
+                        math::Vector<3> euler_angles_s;
+                        euler_angles_s = _R_relativ.to_euler();
+                        _roll_s         = euler_angles_s(0);
+                        _pitch_s        = euler_angles_s(1);
+                        _yaw_s          = euler_angles_s(2);
+                        */
+
+                        _traction_status.pos_inert[0]=x_inert;
+                        _traction_status.pos_inert[1]=y_inert;
+                        _traction_status.pos_inert[2]=z_inert;
+
+                        _traction_status.roll_target = target_roll;
+
+                        //_traction_status.pos_local_sphere[0]=local_r_s;
+                        //_traction_status.pos_local_sphere[1]=local_phi_s;
+                        //_traction_status.pos_local_sphere[2]=local_theta_s;
+
+                        //_traction_status.att_relativ[0]=_roll_s;
+                        //_traction_status.att_relativ[1]=_pitch_s;
+                        //_traction_status.att_relativ[2]=_yaw_s;
+
+                        _traction_status.timestamp=hrt_absolute_time();
+
+                        if(_traction_status_pub != nullptr){
+                                orb_publish(ORB_ID(traction_status), _traction_status_pub, &_traction_status);
+                        }else{
+                                _traction_status_pub = orb_advertise(ORB_ID(traction_status), &_traction_status);
+                        }
+
+
 
 			if (_vehicle_status.is_vtol && _parameters.vtol_type == 0) {
 				/* vehicle is a tailsitter, we need to modify the estimated attitude for fw mode
@@ -837,9 +993,13 @@ FixedwingAttitudeControl::task_main()
 
 			global_pos_poll();
 
+                        local_pos_poll();
+
 			vehicle_status_poll();
 
 			vehicle_land_detected_poll();
+
+                        home_position_poll();
 
 			// the position controller will not emit attitude setpoints in some modes
 			// we need to make sure that this flag is reset
@@ -972,40 +1132,27 @@ FixedwingAttitudeControl::task_main()
 				yaw_sp = _att_sp.yaw_body;
 				throttle_sp = _att_sp.thrust;
 
+
+                                warnx("before if traction flag");
+                                /*if in traction mode set a predefined roll_sp*/
+                                if(_vcontrol_mode.flag_control_attitude_enabled){//flag_control_tractionphase_enabled){
+                                        //roll_sp = float(_parameters.bank_angle);
+                                        warnx("in if traction flag");
+                                        if(PX4_ISFINITE(target_roll)){
+                                                roll_sp=PX4_ISFINITE(roll_sp);
+                                                warnx("roll target finite");
+                                        }else{
+                                                roll_sp = .3;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+                                                warnx("roll target infinite, used 0 instead");
+                                        }
+                                        pitch_sp = 0;
+                                        _att_sp.thrust = _manual.z;
+                                }
+
 				/* allow manual yaw in manual modes */
 				if (_vcontrol_mode.flag_control_manual_enabled) {
 					yaw_manual = _manual.r;
 				}
-
-                if(_vcontrol_mode.flag_control_transition_ftero_enabled){
-
-                    /* Currently only used for simple switch between mc and fw*/
-
-
-                    /*uint64_t start_transition=hrt_abstime();
-                    double dt=hrt_elapsed_time(&start_transition);
-                    double duration_transition=5*100000;
-                    while (dt<duration_transition) {
-                        pitch_sp=0.4*dt/duration_transition;
-                        PX4_INFO("test");
-                        dt=hrt_elapsed_time(&start_transition);
-                    }
-                    pitch_sp=0;
-                    status->nav_state = vehicle_status_s::NAVIGATION_STATE_STAB;
-
-                    roll_sp=0.2;
-                    pitch_sp=0.1;
-                    */
-                    PX4_INFO("INTO TRANSITION fw_att");
-
-
-
-
-                }
-
-                if(_vcontrol_mode.flag_control_traction_ftero_enabled){
-                PX4_INFO("INTO TRACTION fw_att");
-                }
 
 				/* reset integrals where needed */
 				if (_att_sp.roll_reset_integral) {
@@ -1022,7 +1169,7 @@ FixedwingAttitudeControl::task_main()
 				}
 
 				/* If the aircraft is on ground reset the integrators */
-                if (_vehicle_land_detected.landed || _vehicle_status.is_rotary_wing) {
+				if (_vehicle_land_detected.landed || _vehicle_status.is_rotary_wing) {
 					_roll_ctrl.reset_integrator();
 					_pitch_ctrl.reset_integrator();
 					_yaw_ctrl.reset_integrator();
@@ -1184,7 +1331,7 @@ FixedwingAttitudeControl::task_main()
 						_parameters.trim_pitch;
 				_actuators.control[actuator_controls_s::INDEX_YAW] = _manual.r * _parameters.man_yaw_scale + _parameters.trim_yaw;
 				_actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
-			}
+            }
 
 			_actuators.control[actuator_controls_s::INDEX_FLAPS] = _flaps_applied;
 			_actuators.control[5] = _manual.aux1;
