@@ -463,6 +463,7 @@ VtolAttitudeControl::handle_command()
  * Changed either via switch or via command.
  */
 bool
+
 VtolAttitudeControl::is_fixed_wing_requested()
 {
 	bool to_fw = false;
