@@ -3619,21 +3619,20 @@ set_control_mode()
         control_mode.flag_control_traction_ftero_enabled = false;
         break;
 
+        /* at the moment used for clas traction phase*/
    case vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO:
         control_mode.flag_control_manual_enabled = true;
         control_mode.flag_control_auto_enabled = false;
         control_mode.flag_control_rates_enabled = true;
         control_mode.flag_control_attitude_enabled = true;
-        control_mode.flag_control_rattitude_enabled = true;
-        control_mode.flag_control_altitude_enabled = false;
-        control_mode.flag_control_climb_rate_enabled = false;
+        control_mode.flag_control_rattitude_enabled = false;
+        control_mode.flag_control_altitude_enabled = true;
+        control_mode.flag_control_climb_rate_enabled = true;
         control_mode.flag_control_position_enabled = false;
         control_mode.flag_control_velocity_enabled = false;
         control_mode.flag_control_acceleration_enabled = false;
         control_mode.flag_control_termination_enabled = false;
         control_mode.flag_control_transition_ftero_enabled=true;
-        /* override is not ok in stabilized mode */
-        control_mode.flag_external_manual_override_ok = false;
         control_mode.flag_control_traction_ftero_enabled = false;
         break;
 
@@ -3642,16 +3641,14 @@ set_control_mode()
         control_mode.flag_control_auto_enabled = false;
         control_mode.flag_control_rates_enabled = true;
         control_mode.flag_control_attitude_enabled = true;
-        control_mode.flag_control_rattitude_enabled = true;
-        control_mode.flag_control_altitude_enabled = false;
-        control_mode.flag_control_climb_rate_enabled = false;
+        control_mode.flag_control_rattitude_enabled = false;
+        control_mode.flag_control_altitude_enabled = true;
+        control_mode.flag_control_climb_rate_enabled = true;
         control_mode.flag_control_position_enabled = false;
         control_mode.flag_control_velocity_enabled = false;
         control_mode.flag_control_acceleration_enabled = false;
         control_mode.flag_control_termination_enabled = false;
         control_mode.flag_control_transition_ftero_enabled=false;
-        /* override is not ok in stabilized mode */
-        control_mode.flag_external_manual_override_ok = false;
         control_mode.flag_control_traction_ftero_enabled = true;
         break;
 
