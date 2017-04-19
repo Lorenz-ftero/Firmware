@@ -93,6 +93,9 @@
 #include <uORB/topics/collision_report.h>
 #include <uORB/uORB.h>
 
+#include <uORB/topics/traction_status.h>
+#include <mavlink/include/mavlink/v2.0/ftero_messages/ftero_messages.h>
+
 
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_state,
@@ -267,74 +270,142 @@ void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_st
 }
 
 
+class MavlinkStreamFtero : public MavlinkStream
+{
+public:
+        const char *get_name() const
+        {
+                return MavlinkStreamFtero::get_name_static();
+        }
+
+        static const char *get_name_static()
+        {
+                return "FTERO";
+        }
+
+        static uint16_t get_id_static()
+        {
+                return MAVLINK_MSG_ID_TRACTION_DATA;
+        }
+
+        uint16_t get_id()
+        {
+                return get_id_static();
+        }
+
+        static MavlinkStream *new_instance(Mavlink *mavlink)
+        {
+                return new MavlinkStreamFtero(mavlink);
+        }
+
+        unsigned get_size()
+        {
+                return MAVLINK_MSG_ID_TRACTION_DATA_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+        }
+
+
+private:
+        MavlinkOrbSubscription *_sub;
+        uint64_t _traction_status_time;
+
+        /* do not allow top copying this class */
+        MavlinkStreamFtero(MavlinkStreamFtero &);
+        MavlinkStreamFtero &operator = (const MavlinkStreamFtero &);
+
+protected:
+        explicit MavlinkStreamFtero(Mavlink *mavlink) : MavlinkStream(mavlink),
+                _sub(_mavlink->add_orb_subscription(ORB_ID(traction_status))),
+              _traction_status_time(0)
+        {}
+
+        void send(const hrt_abstime t)
+        {
+                struct traction_status_s tr_status;
+
+                /* always send the heartbeat, independent of the update status of the topics */
+                if (_sub->update(&_traction_status_time, &tr_status)) {
+                        mavlink_traction_data_t _msg_traction_status;
+
+                        _msg_traction_status.pos_inert = tr_status.pos_inert;
+                        _msg_traction_status.pos_local = tr_status.pos_local_sphere;
+                        _msg_traction_status.att_rel = tr_status.att_relativ;
+                        _msg_traction_status.roll_t = tr_status.roll_target;
+
+                        _mavlink->send_message(MAVLINK_MSG_ID_TRACTION_DATA, &_msg_traction_status);
+
+                }
+
+        }
+};
+
 class MavlinkStreamHeartbeat : public MavlinkStream
 {
 public:
-	const char *get_name() const
-	{
-		return MavlinkStreamHeartbeat::get_name_static();
-	}
+        const char *get_name() const
+        {
+                return MavlinkStreamHeartbeat::get_name_static();
+        }
 
-	static const char *get_name_static()
-	{
-		return "HEARTBEAT";
-	}
+        static const char *get_name_static()
+        {
+                return "HEARTBEAT";
+        }
 
-	static uint16_t get_id_static()
-	{
-		return MAVLINK_MSG_ID_HEARTBEAT;
-	}
+        static uint16_t get_id_static()
+        {
+                return MAVLINK_MSG_ID_HEARTBEAT;
+        }
 
-	uint16_t get_id()
-	{
-		return get_id_static();
-	}
+        uint16_t get_id()
+        {
+                return get_id_static();
+        }
 
-	static MavlinkStream *new_instance(Mavlink *mavlink)
-	{
-		return new MavlinkStreamHeartbeat(mavlink);
-	}
+        static MavlinkStream *new_instance(Mavlink *mavlink)
+        {
+                return new MavlinkStreamHeartbeat(mavlink);
+        }
 
-	unsigned get_size()
-	{
-		return MAVLINK_MSG_ID_HEARTBEAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
-	}
+        unsigned get_size()
+        {
+                return MAVLINK_MSG_ID_HEARTBEAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+        }
 
-	bool const_rate()
-	{
-		return true;
-	}
+        bool const_rate()
+        {
+                return true;
+        }
 
 private:
-	MavlinkOrbSubscription *_status_sub;
+        MavlinkOrbSubscription *_status_sub;
 
-	/* do not allow top copying this class */
-	MavlinkStreamHeartbeat(MavlinkStreamHeartbeat &);
-	MavlinkStreamHeartbeat &operator = (const MavlinkStreamHeartbeat &);
+        /* do not allow top copying this class */
+        MavlinkStreamHeartbeat(MavlinkStreamHeartbeat &);
+        MavlinkStreamHeartbeat &operator = (const MavlinkStreamHeartbeat &);
 
 protected:
-	explicit MavlinkStreamHeartbeat(Mavlink *mavlink) : MavlinkStream(mavlink),
-		_status_sub(_mavlink->add_orb_subscription(ORB_ID(vehicle_status)))
-	{}
+        explicit MavlinkStreamHeartbeat(Mavlink *mavlink) : MavlinkStream(mavlink),
+                _status_sub(_mavlink->add_orb_subscription(ORB_ID(vehicle_status)))
+        {}
 
-	void send(const hrt_abstime t)
-	{
-		struct vehicle_status_s status;
+        void send(const hrt_abstime t)
+        {
+                struct vehicle_status_s status;
 
-		/* always send the heartbeat, independent of the update status of the topics */
-		if (!_status_sub->update(&status)) {
-			/* if topic update failed fill it with defaults */
-			memset(&status, 0, sizeof(status));
-		}
+                /* always send the heartbeat, independent of the update status of the topics */
+                if (!_status_sub->update(&status)) {
+                        /* if topic update failed fill it with defaults */
+                        memset(&status, 0, sizeof(status));
+                }
 
-		uint8_t base_mode = 0;
-		uint32_t custom_mode = 0;
-		uint8_t system_status = 0;
-		get_mavlink_mode_state(&status, &system_status, &base_mode, &custom_mode);
+                uint8_t base_mode = 0;
+                uint32_t custom_mode = 0;
+                uint8_t system_status = 0;
+                get_mavlink_mode_state(&status, &system_status, &base_mode, &custom_mode);
 
-		mavlink_msg_heartbeat_send(_mavlink->get_channel(), _mavlink->get_system_type(), MAV_AUTOPILOT_PX4,
-					   base_mode, custom_mode, system_status);
-	}
+                mavlink_msg_heartbeat_send(_mavlink->get_channel(), _mavlink->get_system_type(), MAV_AUTOPILOT_PX4,
+                                           base_mode, custom_mode, system_status);
+        }
 };
 
 class MavlinkStreamStatustext : public MavlinkStream
@@ -3638,5 +3709,6 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamCollision::new_instance, &MavlinkStreamCollision::get_name_static, &MavlinkStreamCollision::get_id_static),
 	new StreamListItem(&MavlinkStreamWind::new_instance, &MavlinkStreamWind::get_name_static, &MavlinkStreamWind::get_id_static),
 	new StreamListItem(&MavlinkStreamMountOrientation::new_instance, &MavlinkStreamMountOrientation::get_name_static, &MavlinkStreamMountOrientation::get_id_static),
+        new StreamListItem(&MavlinkStremFtero::new_instance, &MavlinkStreamFtero::get_name_static, &MavlinkStreamFtero::get_id_static),
 	nullptr
 };
