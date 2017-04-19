@@ -94,7 +94,8 @@
 #include <uORB/uORB.h>
 
 #include <uORB/topics/traction_status.h>
-#include <mavlink/include/mavlink/v2.0/ftero_messages/ftero_messages.h>
+//#include <mavlink/include/mavlink/v2.0/ftero_messages/ftero_messages.h>
+#include <mavlink/include/mavlink/v2.0/ftero_messages/mavlink_msg_traction_data.h>
 
 
 static uint16_t cm_uint16_from_m_float(float m);
@@ -322,7 +323,6 @@ protected:
         {
                 struct traction_status_s tr_status;
 
-                /* always send the heartbeat, independent of the update status of the topics */
                 if (_sub->update(&_traction_status_time, &tr_status)) {
                         mavlink_traction_data_t _msg_traction_status;
 
