@@ -95,7 +95,7 @@
 
 #include <uORB/topics/traction_status.h>
 //#include <mavlink/include/mavlink/v2.0/ftero_messages/ftero_messages.h>
-#include <mavlink/include/mavlink/v2.0/ftero_messages/mavlink_msg_traction_data.h>
+//#include <mavlink/include/mavlink/v2.0/ftero_messages/mavlink_msg_traction_data.h>
 
 
 static uint16_t cm_uint16_from_m_float(float m);
