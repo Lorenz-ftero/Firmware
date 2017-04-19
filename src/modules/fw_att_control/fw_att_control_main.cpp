@@ -1135,7 +1135,7 @@ FixedwingAttitudeControl::task_main()
 
                                 warnx("before if traction flag");
                                 /*if in traction mode set a predefined roll_sp*/
-                                if(_vcontrol_mode.flag_control_attitude_enabled){//flag_control_tractionphase_enabled){
+                                if(_vcontrol_mode.flag_control_transition_ftero_enabled){//flag_control_tractionphase_enabled){
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
                                         if(PX4_ISFINITE(target_roll)){
