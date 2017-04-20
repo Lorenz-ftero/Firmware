@@ -890,7 +890,7 @@ FixedwingAttitudeControl::task_main()
                         angle_error = acos(velocity_tan*heading_ref);
 
                         target_roll = _parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
-
+                        target_roll = math::constrain(target_roll, -_parameters.bank_angle, _parameters.bank_angle);
 
                         /*
 
