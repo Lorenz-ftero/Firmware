@@ -1139,10 +1139,10 @@ FixedwingAttitudeControl::task_main()
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
                                         if(PX4_ISFINITE(target_roll)){
-                                                roll_sp=PX4_ISFINITE(roll_sp);
+                                                roll_sp=target_roll;
                                                 warnx("roll target finite");
                                         }else{
-                                                roll_sp = .3;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
+                                                roll_sp = 0;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
                                                 warnx("roll target infinite, used 0 instead");
                                         }
                                         pitch_sp = 0;
