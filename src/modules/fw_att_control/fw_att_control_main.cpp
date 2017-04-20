@@ -1149,7 +1149,9 @@ FixedwingAttitudeControl::task_main()
                                         _att_sp.thrust = _manual.z;
                                         PX4_INFO("CLA_TRACTION");
                                 }
-
+                if(_vcontrol_mode.flag_control_traction_ftero_enabled){
+                    PX4_INFO("test_traction_fw");
+                }
 				/* allow manual yaw in manual modes */
 				if (_vcontrol_mode.flag_control_manual_enabled) {
 					yaw_manual = _manual.r;

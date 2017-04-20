@@ -722,7 +722,8 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
                 break;
 
             case commander_state_s::MAIN_STATE_TRACTION_FTERO:
-                status->nav_state = vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO;
+                status->nav_state = vehicle_status_s::NAVIGATION_STATE_TRACTION_FTERO;
+                break;
 
             case commander_state_s::MAIN_STATE_ALTCTL:
 				status->nav_state = vehicle_status_s::NAVIGATION_STATE_ALTCTL;
