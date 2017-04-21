@@ -129,7 +129,8 @@ void Tailsitter::update_vtol_state()
 	*/
 
 	matrix::Eulerf euler = matrix::Quatf(_v_att->q);
-	float pitch = euler.theta();
+
+    /*float pitch = euler.theta();*/
 
 	if (!_attc->is_fixed_wing_requested()) {
 
@@ -157,10 +158,12 @@ void Tailsitter::update_vtol_state()
 		case TRANSITION_BACK:
 
 			// check if we have reached pitch angle to switch to MC mode
-			if (pitch >= PITCH_TRANSITION_BACK) {
+            /* for direct MC MODE:
+            if (pitch >= PITCH_TRANSITION_BACK) {
 				_vtol_schedule.flight_mode = MC_MODE;
 			}
-
+            */
+            _vtol_schedule.flight_mode = MC_MODE;
 			break;
 		}
 
@@ -179,11 +182,13 @@ void Tailsitter::update_vtol_state()
 		case TRANSITION_FRONT_P1:
 
 			// check if we have reached airspeed  and pitch angle to switch to TRANSITION P2 mode
-			if ((_airspeed->indicated_airspeed_m_s >= _params_tailsitter.airspeed_trans
+            /* For simple into FŴ:
+            if ((_airspeed->indicated_airspeed_m_s >= _params_tailsitter.airspeed_trans
 			     && pitch <= PITCH_TRANSITION_FRONT_P1) || can_transition_on_ground()) {
 				_vtol_schedule.flight_mode = FW_MODE;
 				//_vtol_schedule.transition_start = hrt_absolute_time();
-			}
+            }*/
+            _vtol_schedule.flight_mode = FW_MODE;
 
 			break;
 
