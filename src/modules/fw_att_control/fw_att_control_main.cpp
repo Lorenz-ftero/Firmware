@@ -1135,7 +1135,8 @@ FixedwingAttitudeControl::task_main()
 
                                 /*warnx("before if traction flag");*/
                                 /*if in traction mode set a predefined roll_sp*/
-                                if(_vcontrol_mode.flag_control_transition_ftero_enabled){//flag_control_tractionphase_enabled){
+                                if(_vcontrol_mode.flag_control_traction_ftero_enabled){//flag_control_tractionphase_enabled){
+                                       /*
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
                                         if(PX4_ISFINITE(target_roll)){
@@ -1146,11 +1147,11 @@ FixedwingAttitudeControl::task_main()
                                                 warnx("roll target infinite, used 0 instead");
                                         }
                                         pitch_sp = 0;
-                                        _att_sp.thrust = _manual.z;
-                                        PX4_INFO("CLA_TRACTION");
+                                        _att_sp.thrust = _manual.z;*/
+                                        PX4_INFO("traction fw_att");
                                 }
-                if(_vcontrol_mode.flag_control_traction_ftero_enabled){
-                    PX4_INFO("test_traction_fw");
+                if(_vcontrol_mode.flag_control_transition_ftero_enabled){
+                    PX4_INFO("transiton fw_att");
                 }
 				/* allow manual yaw in manual modes */
 				if (_vcontrol_mode.flag_control_manual_enabled) {
