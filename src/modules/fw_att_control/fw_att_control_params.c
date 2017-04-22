@@ -46,6 +46,54 @@
  */
 
 /**
+ * Roll proportional gain on the roll sp
+ *
+ *
+ * @min 0.005
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.005
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_P_ROLL_TR, 0.01f);
+
+/**
+ * Refrece Radius of circle for Traction phase
+ *
+ * @unit m
+ * @min 0
+ * @max 100
+ * @decimal 2
+ * @increment 0.1
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_RAD1_TR, 50.0f);
+
+/**
+ * Preview in circle for Traction phase
+ *
+ * @unit rad
+ * @min 0
+ * @max 3.2
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_PRE_TR, 1.0f);
+
+/**
+ * Bank Angle for Traction phase
+ *
+ * @unit 90 degs
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_BANK_TR, 0.0f);
+
+/**
  * Attitude Roll Time Constant
  *
  * This defines the latency between a roll step input and the achieved setpoint

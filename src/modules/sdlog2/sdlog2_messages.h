@@ -634,6 +634,21 @@ struct log_DPRS_s {
 	float temperature;
 };
 
+/* --- TRACTION PHASE STATUS --- */
+#define LOG_TRST_MSG 63
+struct log_TRST_s {
+        float x;
+        float y;
+        float z;
+        float r;
+        float theta;
+        float phi;
+        float roll_s;
+        float pitch_s;
+        float yaw_s;
+        float roll_t;
+};
+
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
 
 /* --- TIME - TIME STAMP --- */
@@ -728,7 +743,8 @@ static const struct log_format_s log_formats[] = {
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-	LOG_FORMAT(PARM, "Nf", "Name,Value")
+        LOG_FORMAT(PARM, "Nf", "Name,Value"),
+        LOG_FORMAT(TRST, "fffffffff", "X,Y,Z,R,Theta,Phi,Roll_relativ,pitch_relativ,yaw_relativ")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);
