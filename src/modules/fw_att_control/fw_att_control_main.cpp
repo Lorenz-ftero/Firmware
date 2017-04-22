@@ -1152,7 +1152,7 @@ FixedwingAttitudeControl::task_main()
                                 }
 
                 if(_vcontrol_mode.flag_control_transition_ftero_enabled){
-                    pitch_sp = 0.3;
+                    pitch_sp = 0.5;
                     PX4_INFO("transiton fw_att");
                 }
 				/* allow manual yaw in manual modes */
