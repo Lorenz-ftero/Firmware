@@ -28,6 +28,7 @@ Elevons/Ailerons mixer
 
 Channel 5 connects to the right (starboard) aileron.
 Channel 6 connects to the left (port) aileron.
+test_lorenz
 
 
 M: 2
