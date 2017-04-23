@@ -43,6 +43,19 @@
  *
  * It's recommended to set it > 0 to avoid free fall with zero thrust.
  *
+ * @min -.5
+ * @max .5
+ * @decimal 2
+ * @increment 0.01
+ * @group Multicopter Position Control
+ */
+PARAM_DEFINE_FLOAT(MPC_PITCH_SP, 0);
+
+/**
+ * Minimum thrust in auto thrust control
+ *
+ * It's recommended to set it > 0 to avoid free fall with zero thrust.
+ *
  * @unit norm
  * @min 0.05
  * @max 1.0
