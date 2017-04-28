@@ -966,7 +966,7 @@ MulticopterPositionControl::control_manual(float dt)
 			_pos_sp(0) = _pos(0);
 			_pos_sp(1) = _pos(1);
             _run_pos_control = false;
-            request velocity setpoint to be used, instead of position setpoint
+            /*request velocity setpoint to be used, instead of position setpoint*/
 			_vel_sp(0) = req_vel_sp_scaled(0);
 			_vel_sp(1) = req_vel_sp_scaled(1);
 		}
@@ -1339,7 +1339,7 @@ MulticopterPositionControl::task_main()
 	_local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	_global_vel_sp_sub = orb_subscribe(ORB_ID(vehicle_global_velocity_setpoint));
 
-    params_ftero._pitch_transition_final=1.0f;
+    params_ftero._pitch_transition_final=0.4f;
     params_ftero._roll_transition_final=0.0f;
     params_ftero._thrust_transition_final=0.0f;
     params_ftero._transition_duration =5.0f;
@@ -1480,46 +1480,6 @@ MulticopterPositionControl::task_main()
 			_alt_hold_engaged = false;
 		}
 
-        if(!_control_mode.flag_control_transition_ftero_enabled){
-            _yaw_transition_start = _att_sp.yaw_body;
-            _pitch_transition_start = _att_sp.pitch_body;
-            _roll_transition_start = _att_sp.roll_body;
-            _thrust_transition_start = _att_sp.thrust;
-            _transition_start_ftero = hrt_absolute_time();
-
-        }
-
-        if(_control_mode.flag_control_transition_ftero_enabled){
-            PX4_INFO("in transition mc");
-
-
-            float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
-
-            /*ceate time dependant pitch angle set point + 0.2 rad overlap over the switch value*/
-            _att_sp.pitch_body = _pitch_transition_start	- (fabsf(params_ftero._pitch_transition_final - _pitch_transition_start) *
-                        elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f));
-            _att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final,
-                                _pitch_transition_start);
-
-            _att_sp.thrust = _thrust_transition_start;
-
-            if(elapsed_time_transition>=params_ftero._transition_duration* 1000000.0f){
-
-
-                PX4_INFO("transition ended mc");
-            }
-
-
-/*
-             if (_airspeed->indicated_airspeed_m_s <= _params_tailsitter.airspeed_trans) {
-                _thrust_transition = _thrust_transition_start + (fabsf(THROTTLE_TRANSITION_MAX * _thrust_transition_start) *
-                             (float)hrt_elapsed_time(&_ftero_transition_start) / (_params_tailsitter.front_trans_dur * 1000000.0f));
-                _thrust_transition = math::constrain(_thrust_transition , _thrust_transition_start ,
-                                     (1.0f + THROTTLE_TRANSITION_MAX) * _thrust_transition_start);
-                _att_sp->thrust = _thrust_transition;
-            }*/
-
-        }
 
 		if (_control_mode.flag_control_altitude_enabled ||
 		    _control_mode.flag_control_position_enabled ||
@@ -1688,7 +1648,7 @@ MulticopterPositionControl::task_main()
 					_reset_alt_sp = true;
 				}
 
-				if (!_control_mode.flag_control_velocity_enabled) {
+                if (!_control_mode.flag_control_velocity_enabled) {
 					_vel_sp_prev(0) = _vel(0);
 					_vel_sp_prev(1) = _vel(1);
 					_vel_sp(0) = 0.0f;
@@ -2194,10 +2154,54 @@ MulticopterPositionControl::task_main()
 				}
 			}
 
+            if(!_control_mode.flag_control_transition_ftero_enabled){
+                _yaw_transition_start = _att_sp.yaw_body;
+                _pitch_transition_start = _att_sp.pitch_body;
+                _roll_transition_start = _att_sp.roll_body;
+                _thrust_transition_start = _att_sp.thrust;
+                _transition_start_ftero = hrt_absolute_time();
+
+            }
+
 			/* control roll and pitch directly if no aiding velocity controller is active */
 			if (!_control_mode.flag_control_velocity_enabled) {
 				_att_sp.roll_body = _manual.y * _params.man_roll_max;
 				_att_sp.pitch_body = -_manual.x * _params.man_pitch_max;
+
+
+
+                if(_control_mode.flag_control_transition_ftero_enabled){
+                    PX4_INFO("in transition mc");
+
+
+                    float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
+
+                    /*ceate time dependant pitch angle set point + 0.2 rad overlap over the switch value*/
+                    _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	- (fabsf(params_ftero._pitch_transition_final - _pitch_transition_start) *
+                                elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f));
+                    _att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final,
+                                        _pitch_transition_start);
+
+                    _att_sp.thrust = _thrust_transition_start;
+
+                    if(elapsed_time_transition>=params_ftero._transition_duration* 1000000.0f){
+
+                        PX4_INFO("transition ended mc");
+                    }
+
+
+        /*
+                     if (_airspeed->indicated_airspeed_m_s <= _params_tailsitter.airspeed_trans) {
+                        _thrust_transition = _thrust_transition_start + (fabsf(THROTTLE_TRANSITION_MAX * _thrust_transition_start) *
+                                     (float)hrt_elapsed_time(&_ftero_transition_start) / (_params_tailsitter.front_trans_dur * 1000000.0f));
+                        _thrust_transition = math::constrain(_thrust_transition , _thrust_transition_start ,
+                                             (1.0f + THROTTLE_TRANSITION_MAX) * _thrust_transition_start);
+                        _att_sp->thrust = _thrust_transition;
+                    }*/
+
+                }
+
+                /*if ftero transition-> _att_sp=_att_sp+meinen*/
 
 				/* only if optimal recovery is not used, modify roll/pitch */
 				if (_params.opt_recover <= 0) {
