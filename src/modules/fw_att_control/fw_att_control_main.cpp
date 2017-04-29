@@ -225,11 +225,17 @@ private:
 		float flaps_scale;				/**< Scale factor for flaps */
 		float flaperon_scale;			/**< Scale factor for flaperons */
 
-		int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
+                int vtol_type;					/**< VTOL type: 0 = tailsitter, 1 = tiltrotor */
+
+                float center_elevation;
+                float center_azimuth;
+                float angular_radius;
+                float damping_l1;
+                float period_l1;
                 float bank_angle;
-                float preview_c;
-                float radius_ref;
                 float p_gain_roll;
+                int circle_dir;
+                float elevation_min;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -280,11 +286,17 @@ private:
 		param_t flaps_scale;
 		param_t flaperon_scale;
 
-		param_t vtol_type;
+                param_t vtol_type;
+
+                param_t center_elevation;
+                param_t center_azimuth;
+                param_t angular_radius;
+                param_t damping_l1;
+                param_t period_l1;
                 param_t bank_angle;
-                param_t preview_c;
-                param_t radius_ref;
                 param_t p_gain_roll;
+                param_t circle_dir;
+                param_t elevation_min;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
@@ -294,19 +306,36 @@ private:
         float _pitch;
         float _yaw;
 
-        float x_inert;
-        float y_inert;
-        float z_inert;
+        float _x_inert;
+        float _y_inert;
+        float _z_inert;
 
-        float alpha;
+        float _local_r_s;
+        float _local_el_s;
+        float _local_az_s;
+
+        float _L1_ratio;
+        float _K_L1;
+        float _L1_arc;
+        float _R_arc;
+
+        float _heading_gs;
+        float _PC_arc;
+        float _PW_arc;
+        float _CW_arc;
+
+        float _ber_c;
+        float _ber_ref;
+
+        float _eta;
+        float _a_lat;
+        float _target_roll;
+
 
         float angle_error;
 
         float target_roll;
 
-        float local_r_s;
-        float local_theta_s;
-        float local_phi_s;
 
         math::Matrix<3, 3> _R_s;
         math::Matrix<3, 3> _R_relativ;
@@ -505,10 +534,17 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
 	_parameter_handles.flaperon_scale = param_find("FW_FLAPERON_SCL");
 
 	_parameter_handles.vtol_type = param_find("VT_TYPE");
-        _parameter_handles.bank_angle = param_find("FW_BANK_TR");
-        _parameter_handles.preview_c = param_find("FW_PRE_TR");
-        _parameter_handles.radius_ref = param_find("FW_RAD1_TR");
-        _parameter_handles.p_gain_roll = param_find("FW_P_ROLL_TR");
+
+
+        _parameter_handles.center_elevation = param_find("FW_TR_EL");
+        _parameter_handles.center_azimuth = param_find("FW_TR_AZ");
+        _parameter_handles.angular_radius = param_find("FW_TR_RAD");
+        _parameter_handles.damping_l1 = param_find("FW_TR_DAMP");
+        _parameter_handles.period_l1 = param_find("FW_TR_PER");
+        _parameter_handles.bank_angle = param_find("FW_TR_BANK");
+        _parameter_handles.p_gain_roll = param_find("FW_TR_P_ROLL");
+        _parameter_handles.circle_dir = param_find("FW_TR_DIR");
+        _parameter_handles.elevation_min = param_find("FW_TR_SEL");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -600,10 +636,17 @@ FixedwingAttitudeControl::parameters_update()
 	param_get(_parameter_handles.flaperon_scale, &_parameters.flaperon_scale);
 
         param_get(_parameter_handles.vtol_type, &_parameters.vtol_type);
+
+        param_get(_parameter_handles.center_elevation ,&_parameters.center_elevation);
+        param_get(_parameter_handles.center_azimuth ,&_parameters.center_azimuth);
+        param_get(_parameter_handles.angular_radius ,&_parameters.angular_radius);
+        param_get(_parameter_handles.damping_l1 ,&_parameters.damping_l1);
+        param_get(_parameter_handles.period_l1 ,&_parameters.period_l1);
         param_get(_parameter_handles.bank_angle, &_parameters.bank_angle);
-        param_get(_parameter_handles.preview_c, &_parameters.preview_c);
-        param_get(_parameter_handles.radius_ref, &_parameters.radius_ref);
         param_get(_parameter_handles.p_gain_roll, &_parameters.p_gain_roll);
+        param_get(_parameter_handles.circle_dir, &_parameters.circle_dir);
+        param_get(_parameter_handles.elevation_min, &_parameters.elevation_min);
+
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
 	_pitch_ctrl.set_k_p(_parameters.p_p);
@@ -866,40 +909,101 @@ FixedwingAttitudeControl::task_main()
                         _pitch   = euler_angles(1);
                         _yaw     = euler_angles(2);
 
+                        _L1_ratio =_parameters.damping_l1*_parameters.period_l1 /M_PI_F;
+                        _K_L1 = 4 * _parameters.damping_l1*_parameters.damping_l1;
+
+
+                        math::Vector<3> _rc;
+                        _rc(0)=cos(_parameters.center_elevation)*sin(_parameters.center_azimuth);
+                        _rc(0)=cos(_parameters.center_azimuth);
+                        _rc(0)=sin(_parameters.center_elevation);
+                        _rc.normalize();
+
                         /*convert from global to local and then to spherical frame*/
-                        x_inert=_vehicle_local_position.x-_home_position.x;
-                        y_inert=_vehicle_local_position.y-_home_position.y;
-                        z_inert=_vehicle_local_position.z-_home_position.z;
+                        _x_inert=_vehicle_local_position.x-_home_position.x;
+                        _y_inert=_vehicle_local_position.y-_home_position.y;
+                        _z_inert=_vehicle_local_position.z-_home_position.z;
+
+                        math::Vector<3> _rw;
+                        _rw(0)=_x_inert;
+                        _rw(1)=_y_inert;
+                        _rw(2)=_z_inert;
+
+                         math::Vector<3>  _rw_unit = _rw.normalized();
+
+                        _local_r_s=sqrtf(_x_inert*_x_inert+_y_inert*_y_inert+_z_inert*_z_inert);
+                        _local_az_s=atan2(_y_inert,_x_inert);
+                        _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),_z_inert);
+
+                        _R_s.from_euler(0,_local_el_s,_local_az_s);
+
+
+                        math::Vector<3> _gs;
+                        _gs(0)=_vehicle_local_position.vx;
+                        _gs(1)=_vehicle_local_position.vy;
+                        _gs(2)=_vehicle_local_position.vz;
+
+                        float gs_length=_gs.length();
+
+
+                        math::Vector<3> _gs_L = _R_s*_gs;
+                        _heading_gs = atan2(_gs(0),_gs(1));
+
+                        _R_arc = _parameters.angular_radius * _local_r_s;
+
+                        _L1_arc = _L1_ratio*gs_length;
+
+                        if(_L1_arc / _R_arc > 1.0f && gs_length > 0.0f){
+                                _L1_ratio=_R_arc/gs_length;
+                                _L1_arc=_R_arc;
+                        }
+
+                        float cos_ang=_rw_unit*_rc;
+                        cos_ang = math::constrain(cos_ang, -1.0f, 1.0f);
+                        _CW_arc=_local_r_s*acosf(cos_ang);
+
+                        if(_L1_arc<_CW_arc){
+                                _L1_arc=_CW_arc;
+                        }
+
+                        float cos_ang2=_rc(2);
+                        cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
+                        _PC_arc=_local_r_s*acosf(cos_ang2);
+
+                        float cos_ang3=_rw_unit(2);
+                        cos_ang3=math::constrain(cos_ang3, -1.0f, 1.0f);
+                        _PW_arc=_local_r_s*acosf(cos_ang3);
+
+
+                        float cos_ang4=(cos(_PC_arc)-cos(_CW_arc)*cos(_PW_arc))/(sin(_CW_arc)*sin(_PW_arc));
+                        cos_ang4=math::constrain(cos_ang4, -1.0f, 1.0f);
+                        _ber_c=acosf(cos_ang4);
+
+                        float cos_ang5=(cos(_R_arc)-cos(_CW_arc)*cos(_L1_arc))/(sin(_CW_arc)*sin(_L1_arc));
+                        cos_ang5=math::constrain(cos_ang5, -1.0f, 1.0f);
+                        _ber_ref=acosf(cos_ang5);
+
+                        float loiter_dir = (_parameters.circle_dir>0.5) ? 1:-1;
+
+                        float center_dir = (_rc(0)*_rw(1)-_rc(1)*_rw(0)>0) ? 1:-1;
+
+
+                        _eta=_heading_gs+center_dir*(_ber_c+loiter_dir*_ber_ref);
+
+                        if(_local_el_s<_parameters.elevation_min){
+                                _eta=_wrap_pi(_heading_gs);
+                        }
+
+                        _a_lat= _K_L1*gs_length*gs_length/_L1_arc*sinf(_eta);
+
+                        _target_roll=_parameters.p_gain_roll*atan2f(9.81f,_a_lat);
+                        _target_roll=math::constrain(_target_roll, -_parameters.bank_angle, _parameters.bank_angle);
 
 
 
-                        alpha = atan(x_inert/y_inert);
-
-                        math::Vector<2> velocity_tan;
-                        velocity_tan(0)=_vehicle_local_position.vx;
-                        velocity_tan(1)=_vehicle_local_position.vy;
-                        math::Vector<2> velocity_tan2=velocity_tan;
-                        velocity_tan.normalize();
-
-                        math::Vector<2> heading_ref;
-                        heading_ref(0)=double(_parameters.radius_ref)*cos(alpha+_parameters.preview_c)-double(x_inert);
-                        heading_ref(1)=double(_parameters.radius_ref)*sin(alpha+_parameters.preview_c)-double(y_inert);
-                        math::Vector<2> heading_ref2=heading_ref;
-                        heading_ref.normalize();
-
-                        angle_error = acos(velocity_tan*heading_ref);
-
-                        target_roll = _parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
-                        target_roll = math::constrain(target_roll, -_parameters.bank_angle, _parameters.bank_angle);
-
-                        /*
-
-                        local_r_s=sqrtf(x_inert*x_inert+y_inert*y_inert+z_inert*z_inert);
-                        local_phi_s=atan2(y_inert,x_inert);
-                        local_theta_s=atan2(z_inert,sqrtf(x_inert*x_inert+y_inert*y_inert));
 
                         //generate the rotation matrix to a spherically tangent frame
-                        _R_s.from_euler(0,local_theta_s,local_phi_s);
+                        _R_s.from_euler(0,_local_el_s,_local_az_s);
 
                         //compute the rotationstate relativ to this frame
                         _R_relativ=_R*_R_s;
@@ -910,21 +1014,53 @@ FixedwingAttitudeControl::task_main()
                         _roll_s         = euler_angles_s(0);
                         _pitch_s        = euler_angles_s(1);
                         _yaw_s          = euler_angles_s(2);
-                        */
 
-                        _traction_status.pos_inert[0]=x_inert;
-                        _traction_status.pos_inert[1]=y_inert;
-                        _traction_status.pos_inert[2]=z_inert;
 
-                        _traction_status.roll_target = target_roll;
 
-                        //_traction_status.pos_local_sphere[0]=local_r_s;
-                        //_traction_status.pos_local_sphere[1]=local_phi_s;
-                        //_traction_status.pos_local_sphere[2]=local_theta_s;
-
-                        //_traction_status.att_relativ[0]=_roll_s;
-                        //_traction_status.att_relativ[1]=_pitch_s;
-                        //_traction_status.att_relativ[2]=_yaw_s;
+                        _traction_status.pos_inert_x = _x_inert;
+                        _traction_status.pos_inert_y = _y_inert;
+                        _traction_status.pos_inert_z = _z_inert;
+                        _traction_status.local_r = _local_r_s;
+                        _traction_status.local_az = _local_az_s;
+                        _traction_status.local_el = _local_el_s;
+                        _traction_status.roll = _roll;
+                        _traction_status.pitch = _pitch;
+                        _traction_status.yaw = _yaw;
+                        _traction_status.roll_s = _roll_s;
+                        _traction_status.pitch_s = _pitch_s;
+                        _traction_status.yaw_s = _yaw_s;
+                        _traction_status.L1_ratio = _L1_ratio;
+                        _traction_status.L1_K = _K_L1;
+                        _traction_status.L1_arc = _L1_arc;
+                        _traction_status.R_arc = _R_arc;
+                        _traction_status.PC_arc = _PC_arc;
+                        _traction_status.PW_arc = _PW_arc;
+                        _traction_status.CW_arc = _CW_arc;
+                        _traction_status.heading_gs = _heading_gs;
+                        _traction_status.ber_c = _ber_c;
+                        _traction_status.ber_ref = _ber_ref;
+                        _traction_status.eta = _eta;
+                        _traction_status.a_lat = _a_lat;
+                        _traction_status.target_roll = _target_roll;
+                        _traction_status.param_EL = _parameters.center_elevation;
+                        _traction_status.param_AZ = _parameters.center_azimuth;
+                        _traction_status.param_RAD = _parameters.angular_radius;
+                        _traction_status.param_DAMP = _parameters.damping_l1;
+                        _traction_status.param_PER = _parameters.period_l1;
+                        _traction_status.param_P_ROLL = _parameters.p_gain_roll;
+                        _traction_status.param_BANK = _parameters.bank_angle;
+                        _traction_status.param_DIR = _parameters.circle_dir;
+                        _traction_status.param_SEL = _parameters.elevation_min;
+                        _traction_status.reserve_0 = 0.0f;
+                        _traction_status.reserve_1 = 0.0f;
+                        _traction_status.reserve_2 = 0.0f;
+                        _traction_status.reserve_3 = 0.0f;
+                        _traction_status.reserve_4 = 0.0f;
+                        _traction_status.reserve_5 = 0.0f;
+                        _traction_status.reserve_6 = 0.0f;
+                        _traction_status.reserve_7 = 0.0f;
+                        _traction_status.reserve_8 = 0.0f;
+                        _traction_status.reserve_9 = 0.0f;
 
                         _traction_status.timestamp=hrt_absolute_time();
 
@@ -934,6 +1070,11 @@ FixedwingAttitudeControl::task_main()
                                 _traction_status_pub = orb_advertise(ORB_ID(traction_status), &_traction_status);
                         }
 
+                        if(_vcontrol_mode.flag_control_traction_ftero_enabled){
+                        _roll=_roll_s;
+                        _pitch= _pitch_s;
+                        _yaw=_yaw_s;
+                        }
 
 
 			if (_vehicle_status.is_vtol && _parameters.vtol_type == 0) {
@@ -1139,8 +1280,8 @@ FixedwingAttitudeControl::task_main()
 
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
-                                        if(PX4_ISFINITE(target_roll)){
-                                                roll_sp=target_roll;
+                                        if(PX4_ISFINITE(_target_roll)){
+                                                roll_sp=_target_roll;
                                                 warnx("roll target finite");
                                         }else{
                                                 roll_sp = 0;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
