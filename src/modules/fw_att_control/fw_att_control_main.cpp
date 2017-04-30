@@ -952,7 +952,7 @@ FixedwingAttitudeControl::task_main()
 
 
                         math::Vector<3> _gs_L = _R_s*_gs;
-                        _heading_gs = atan2(_gs(0),_gs(1));
+                        _heading_gs = atan2(_gs(0),_gs(1));//should be equal to _yaw_s
 
                         _R_arc = _parameters.angular_radius;
 
