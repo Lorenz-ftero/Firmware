@@ -941,7 +941,7 @@ FixedwingAttitudeControl::task_main()
                         math::Matrix<3, 3> _R_pitch_90;
                         _R_pitch_90.from_euler(0,M_PI_F/2,0);
 
-                        _R_s=_R_pitch_90*_R_s;
+                        _R_s=_R_pitch_90.transposed()*_R_s;
 
                         math::Vector<3> _gs;
                         _gs(0)=_vehicle_local_position.vx;
@@ -1011,11 +1011,11 @@ FixedwingAttitudeControl::task_main()
                         //compute the rotationstate relativ to this frame
                         //_R_relativ=_R.transposed()*_R_s.transposed();
                         //_R_relativ=_R*_R_s.transposed();
-                        _R_relativ=_R.transposed()*_R_s;
+                        //_R_relativ=_R.transposed()*_R_s;
                         //_R_relativ=_R*_R_s;
                         //_R_relativ=_R_s.transposed()*_R.transposed();
                         //_R_relativ=_R_s*_R.transposed();
-                        //_R_relativ=_R_s.transposed()*_R;
+                        _R_relativ=_R_s.transposed()*_R;
                         //_R_relativ=_R_s*_R;
 
                         //compute the euler angles relativ to this frame
