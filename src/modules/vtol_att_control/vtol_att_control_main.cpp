@@ -471,7 +471,11 @@ VtolAttitudeControl::is_fixed_wing_requested()
 	    _v_control_mode.flag_control_manual_enabled) {
 		to_fw = (_manual_control_sp.transition_switch == manual_control_setpoint_s::SWITCH_POS_ON);
 
-	} else {
+    }
+    if (_v_control_mode.flag_control_traction_ftero_enabled)
+        to_fw=true;
+
+    else {
 		// listen to transition commands if not in manual or mode switch is not mapped
 		to_fw = (_transition_command == vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW);
     }
