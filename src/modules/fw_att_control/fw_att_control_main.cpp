@@ -954,9 +954,9 @@ FixedwingAttitudeControl::task_main()
                         math::Vector<3> _gs_L = _R_s*_gs;
                         _heading_gs = atan2(_gs(0),_gs(1));
 
-                        _R_arc = _parameters.angular_radius * _local_r_s;
+                        _R_arc = _parameters.angular_radius;
 
-                        _L1_arc = _L1_ratio*gs_length;
+                        _L1_arc = _L1_ratio*gs_length/_local_r_s;
 
                         if(_L1_arc / _R_arc > 1.0f && gs_length > 0.0f){
                                 _L1_ratio=_R_arc/gs_length;
@@ -965,7 +965,7 @@ FixedwingAttitudeControl::task_main()
 
                         float cos_ang=_rw_unit*_rc;
                         cos_ang = math::constrain(cos_ang, -1.0f, 1.0f);
-                        _CW_arc=_local_r_s*acosf(cos_ang);
+                        _CW_arc=acosf(cos_ang);
 
                         if(_L1_arc<_CW_arc){
                                 _L1_arc=_CW_arc;
@@ -973,11 +973,11 @@ FixedwingAttitudeControl::task_main()
 
                         float cos_ang2=_rc(2);
                         cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
-                        _PC_arc=_local_r_s*acosf(cos_ang2);
+                        _PC_arc=acosf(cos_ang2);
 
                         float cos_ang3=_rw_unit(2);
                         cos_ang3=math::constrain(cos_ang3, -1.0f, 1.0f);
-                        _PW_arc=_local_r_s*acosf(cos_ang3);
+                        _PW_arc=acosf(cos_ang3);
 
 
                         float cos_ang4=(cos(_PC_arc)-cos(_CW_arc)*cos(_PW_arc))/(sin(_CW_arc)*sin(_PW_arc));
