@@ -933,10 +933,15 @@ FixedwingAttitudeControl::task_main()
 
                         _local_r_s=sqrtf(_x_inert*_x_inert+_y_inert*_y_inert+_z_inert*_z_inert);
                         _local_az_s=atan2(_y_inert,_x_inert);
-                        _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),_z_inert);
+                        _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),-_z_inert);
 
                         _R_s.from_euler(0,_local_el_s,_local_az_s);
 
+
+                        math::Matrix<3, 3> _R_pitch_90;
+                        _R_pitch_90.from_euler(0,M_PI_F/2,0);
+
+                        _R_s=_R_pitch_90*_R_s;
 
                         math::Vector<3> _gs;
                         _gs(0)=_vehicle_local_position.vx;
@@ -1002,11 +1007,16 @@ FixedwingAttitudeControl::task_main()
 
 
 
-                        //generate the rotation matrix to a spherically tangent frame
-                        _R_s.from_euler(0,_local_el_s,_local_az_s);
 
                         //compute the rotationstate relativ to this frame
-                        _R_relativ=_R*_R_s;
+                        //_R_relativ=_R.transposed()*_R_s.transposed();
+                        //_R_relativ=_R*_R_s.transposed();
+                        _R_relativ=_R.transposed()*_R_s;
+                        //_R_relativ=_R*_R_s;
+                        //_R_relativ=_R_s.transposed()*_R.transposed();
+                        //_R_relativ=_R_s*_R.transposed();
+                        //_R_relativ=_R_s.transposed()*_R;
+                        //_R_relativ=_R_s*_R;
 
                         //compute the euler angles relativ to this frame
                         math::Vector<3> euler_angles_s;
@@ -1281,7 +1291,7 @@ FixedwingAttitudeControl::task_main()
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
                                         if(PX4_ISFINITE(_target_roll)){
-                                                roll_sp=_target_roll;
+                                                roll_sp=0;//_target_roll;
                                                 warnx("roll target finite");
                                         }else{
                                                 roll_sp = 0;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
