@@ -935,13 +935,13 @@ FixedwingAttitudeControl::task_main()
                         _local_az_s=atan2(_y_inert,_x_inert);
                         _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),-_z_inert);
 
-                        _R_s.from_euler(0,_local_el_s,_local_az_s);
+                        _R_s.from_euler(0,-_local_el_s-M_PI_F/2,_local_az_s);
 
 
-                        math::Matrix<3, 3> _R_pitch_90;
-                        _R_pitch_90.from_euler(0,M_PI_F/2,0);
+                        //math::Matrix<3, 3> _R_pitch_90;
+                        //_R_pitch_90.from_euler(0,M_PI_F/2,0);
 
-                        _R_s=_R_pitch_90.transposed()*_R_s;
+                        //_R_s=_R_pitch_90.transposed()*_R_s;
 
                         math::Vector<3> _gs;
                         _gs(0)=_vehicle_local_position.vx;
@@ -1010,12 +1010,12 @@ FixedwingAttitudeControl::task_main()
 
                         //compute the rotationstate relativ to this frame
                         //_R_relativ=_R.transposed()*_R_s.transposed();
-                        //_R_relativ=_R*_R_s.transposed();
+                        _R_relativ=_R*_R_s.transposed();
                         //_R_relativ=_R.transposed()*_R_s;
                         //_R_relativ=_R*_R_s;
                         //_R_relativ=_R_s.transposed()*_R.transposed();
                         //_R_relativ=_R_s*_R.transposed();
-                        _R_relativ=_R_s.transposed()*_R;
+                        //_R_relativ=_R_s.transposed()*_R;
                         //_R_relativ=_R_s*_R;
 
                         //compute the euler angles relativ to this frame
