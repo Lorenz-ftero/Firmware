@@ -1339,7 +1339,7 @@ MulticopterPositionControl::task_main()
 	_local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	_global_vel_sp_sub = orb_subscribe(ORB_ID(vehicle_global_velocity_setpoint));
 
-    params_ftero._pitch_transition_final=0.5f;
+    params_ftero._pitch_transition_final=-0.5f;
     params_ftero._roll_transition_final=1.0f;
     params_ftero._thrust_transition_final=1.0f;
     params_ftero._transition_duration =5.0f;
@@ -2180,17 +2180,17 @@ MulticopterPositionControl::task_main()
                     if(elapsed_time_transition<params_ftero._transition_duration* 1000000.0f){
 
                     /*ceate time dependant pitch angle set point, for first transition*/
-                   /* _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	+ (params_ftero._pitch_transition_final - _pitch_transition_start) *
-                                elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f);*/
-                    /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);*/
-
+                    _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	+ (params_ftero._pitch_transition_final - _pitch_transition_start) *
+                                elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f);
+                    /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);
+*/
                     _att_sp.thrust = _thrust_transition_start+(params_ftero._thrust_transition_final-_thrust_transition_start)*
                                 elapsed_time_transition/ (params_ftero._transition_duration*1000000.0f);
 
                     _att_sp.roll_body = _att_sp.roll_body+_roll_transition_start +(params_ftero._roll_transition_final - _roll_transition_start)*
                                 elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f);
-                    /*_att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);*/
-
+                    /*_att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);
+*/
 
                     }
 
