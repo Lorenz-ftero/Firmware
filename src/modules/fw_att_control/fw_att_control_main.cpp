@@ -1132,9 +1132,8 @@ FixedwingAttitudeControl::task_main()
 				yaw_sp = _att_sp.yaw_body;
 				throttle_sp = _att_sp.thrust;
 
+/*
 
-                                /*warnx("before if traction flag");*/
-                                /*if in traction mode set a predefined roll_sp*/
                                 if(_vcontrol_mode.flag_control_traction_ftero_enabled){//flag_control_tractionphase_enabled){
 
                                         //roll_sp = float(_parameters.bank_angle);
@@ -1150,11 +1149,9 @@ FixedwingAttitudeControl::task_main()
                                         _att_sp.thrust = _manual.z;
                                         PX4_INFO("traction fw_att");
                                 }
+                                */
 
-                if(_vcontrol_mode.flag_control_transition_ftero_enabled){
-                    pitch_sp = 0.3;
-                    PX4_INFO("transiton fw_att");
-                }
+
 				/* allow manual yaw in manual modes */
 				if (_vcontrol_mode.flag_control_manual_enabled) {
 					yaw_manual = _manual.r;

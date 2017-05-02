@@ -200,6 +200,7 @@ private:
 		param_t acc_hor_max;
 		param_t alt_mode;
 		param_t opt_recover;
+        param_t pitch_offset;
 
 	}		_params_handles;		/**< handles for interesting parameters */
 
@@ -224,7 +225,8 @@ private:
 		float acc_hor_max;
 		float vel_max_up;
 		float vel_max_down;
-		uint32_t alt_mode;
+        uint32_t alt_mode;
+        float pitch_offset;
 
 		int opt_recover;
 
@@ -436,7 +438,7 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_params.vel_max.zero();
 	_params.vel_cruise.zero();
 	_params.vel_ff.zero();
-	_params.sp_offs_max.zero();
+    _params.sp_offs_max.zero();
 
 	_pos.zero();
 	_pos_sp.zero();
@@ -460,6 +462,7 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_params_handles.z_vel_d		= param_find("MPC_Z_VEL_D");
 	_params_handles.z_vel_max_up	= param_find("MPC_Z_VEL_MAX_UP");
 	_params_handles.z_vel_max_down	= param_find("MPC_Z_VEL_MAX");
+    _params_handles.pitch_offset = param_find("MPC_PITCH_SP");
 
 	// transitional support: Copy param values from max to down
 	// param so that max param can be renamed in 1-2 releases
@@ -548,6 +551,7 @@ MulticopterPositionControl::parameters_update(bool force)
 		param_get(_params_handles.tko_speed, &_params.tko_speed);
 		param_get(_params_handles.tilt_max_land, &_params.tilt_max_land);
 		_params.tilt_max_land = math::radians(_params.tilt_max_land);
+        param_get(_params_handles.pitch_offset, &_params.pitch_offset);
 
 		float v;
 		uint32_t v_i;
@@ -2130,7 +2134,7 @@ MulticopterPositionControl::task_main()
 			/* control roll and pitch directly if no aiding velocity controller is active */
 			if (!_control_mode.flag_control_velocity_enabled) {
 				_att_sp.roll_body = _manual.y * _params.man_roll_max;
-				_att_sp.pitch_body = -_manual.x * _params.man_pitch_max;
+                _att_sp.pitch_body = -_manual.x * _params.man_pitch_max + _params.pitch_offset;
 
 				/* only if optimal recovery is not used, modify roll/pitch */
 				if (_params.opt_recover <= 0) {

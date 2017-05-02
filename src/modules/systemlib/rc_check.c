@@ -68,7 +68,7 @@ int rc_calibration_check(orb_advert_t *mavlink_log_pub, bool report_fail, bool i
 
 	unsigned j = 0;
 
-	/* if VTOL, check transition switch mapping */
+    /* if VTOL, check transition switch mapping */
     /*comment out for pure Switch
      * if (isVTOL) {
 		param_t trans_parm = param_find("RC_MAP_TRANS_SW");
