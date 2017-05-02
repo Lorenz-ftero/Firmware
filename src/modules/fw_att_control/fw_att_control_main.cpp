@@ -337,7 +337,7 @@ private:
         float target_roll;
 
 
-        math::Matrix<3, 3> _R_s;
+        math::Matrix<3, 3> _R_LI;
         math::Matrix<3, 3> _R_relativ;
         float _roll_s;
         float _pitch_s;
@@ -915,14 +915,18 @@ FixedwingAttitudeControl::task_main()
 
                         math::Vector<3> _rc;
                         _rc(0)=cos(_parameters.center_elevation)*sin(_parameters.center_azimuth);
-                        _rc(0)=cos(_parameters.center_azimuth);
+                        _rc(0)=cos(_parameters.center_elevation)*cos(_parameters.center_azimuth);
                         _rc(0)=sin(_parameters.center_elevation);
                         _rc.normalize();
 
-                        /*convert from global to local and then to spherical frame*/
-                        _x_inert=_vehicle_local_position.x-_home_position.x;
-                        _y_inert=_vehicle_local_position.y-_home_position.y;
-                        _z_inert=_vehicle_local_position.z-_home_position.z;
+
+                        float _x_ned=_vehicle_local_position.x-_home_position.x;
+                        float _y_ned=_vehicle_local_position.y-_home_position.y;
+                        float _z_ned=_vehicle_local_position.z-_home_position.z;
+
+                        _x_inert=_y_ned;
+                        _y_inert=_x_ned;
+                        _z_inert=-_z_ned;
 
                         math::Vector<3> _rw;
                         _rw(0)=_x_inert;
@@ -933,10 +937,15 @@ FixedwingAttitudeControl::task_main()
 
                         _local_r_s=sqrtf(_x_inert*_x_inert+_y_inert*_y_inert+_z_inert*_z_inert);
                         _local_az_s=atan2(_y_inert,_x_inert);
-                        _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),-_z_inert);
+                        _local_el_s=atan2(_z_inert,sqrtf(_x_inert*_x_inert+_y_inert*_y_inert));
 
-                        _R_s.from_euler(0,-_local_el_s-M_PI_F/2,_local_az_s);
-
+                        _R_LI.from_euler(0,-_local_el_s-M_PI_F/2,_local_az_s);
+                        //const float d1[9]={
+                          //      -cosf(_local_az_s)*sinf(_local_el_s), -sinf(_local_az_s), -cosf(_local_az_s)*cosf(_local_el_s),
+                            //    -sinf(_local_az_s), cosf(_local_az_s), 0,
+                              //  -cosf(_local_az_s)*cosf(_local_el_s), -cosf(_local_el_s)*sinf(_local_az_s), -sinf(_local_el_s)
+                        //};
+                        _R_LI.set(d1);
 
                         //math::Matrix<3, 3> _R_pitch_90;
                         //_R_pitch_90.from_euler(0,M_PI_F/2,0);
@@ -951,7 +960,7 @@ FixedwingAttitudeControl::task_main()
                         float gs_length=_gs.length();
 
 
-                        math::Vector<3> _gs_L = _R_s*_gs;
+                        math::Vector<3> _gs_L = _R_LI*_gs;
                         _heading_gs = atan2(_gs(0),_gs(1));//should be equal to _yaw_s
 
                         _R_arc = _parameters.angular_radius;
@@ -1010,7 +1019,7 @@ FixedwingAttitudeControl::task_main()
 
                         //compute the rotationstate relativ to this frame
                         //_R_relativ=_R.transposed()*_R_s.transposed();
-                        _R_relativ=_R*_R_s.transposed();
+                        _R_relativ=_R*_R_LI.transposed();
                         //_R_relativ=_R.transposed()*_R_s;
                         //_R_relativ=_R*_R_s;
                         //_R_relativ=_R_s.transposed()*_R.transposed();
@@ -1481,7 +1490,13 @@ FixedwingAttitudeControl::task_main()
 					_rate_sp_pub = orb_advertise(_rates_sp_id, &_rates_sp);
 				}
 
+                                if(_vcontrol_mode.flag_control_traction_ftero_enabled){
+                                        _actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
+                                                        _parameters.trim_pitch;
+                                }
+
 			} else {
+
 				/* manual/direct control */
 				_actuators.control[actuator_controls_s::INDEX_ROLL] = _manual.y * _parameters.man_roll_scale + _parameters.trim_roll;
 				_actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
