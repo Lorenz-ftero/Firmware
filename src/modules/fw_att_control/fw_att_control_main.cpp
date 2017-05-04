@@ -912,13 +912,11 @@ FixedwingAttitudeControl::task_main()
                         _L1_ratio =_parameters.damping_l1*_parameters.period_l1 /M_PI_F;
                         _K_L1 = 4 * _parameters.damping_l1*_parameters.damping_l1;
 
-
                         math::Vector<3> _rc;
                         _rc(0)=cos(_parameters.center_elevation)*sin(_parameters.center_azimuth);
-                        _rc(0)=cos(_parameters.center_elevation)*cos(_parameters.center_azimuth);
-                        _rc(0)=sin(_parameters.center_elevation);
+                        _rc(1)=cos(_parameters.center_elevation)*cos(_parameters.center_azimuth);
+                        _rc(2)=sin(_parameters.center_elevation);
                         _rc.normalize();
-
 
                         float _x_ned=_vehicle_local_position.x-_home_position.x;
                         float _y_ned=_vehicle_local_position.y-_home_position.y;
@@ -945,7 +943,7 @@ FixedwingAttitudeControl::task_main()
                             //    -sinf(_local_az_s), cosf(_local_az_s), 0,
                               //  -cosf(_local_az_s)*cosf(_local_el_s), -cosf(_local_el_s)*sinf(_local_az_s), -sinf(_local_el_s)
                         //};
-                        _R_LI.set(d1);
+                        //_R_LI.set(d1);
 
                         //math::Matrix<3, 3> _R_pitch_90;
                         //_R_pitch_90.from_euler(0,M_PI_F/2,0);
@@ -957,18 +955,28 @@ FixedwingAttitudeControl::task_main()
                         _gs(1)=_vehicle_local_position.vy;
                         _gs(2)=_vehicle_local_position.vz;
 
+                        math::Vector<3> _gs_I;
+                        _gs_I(0)=_gs(1);
+                        _gs_I(1)=_gs(0);
+                        _gs_I(2)=-_gs(2);
+
                         float gs_length=_gs.length();
 
 
-                        math::Vector<3> _gs_L = _R_LI*_gs;
-                        _heading_gs = atan2(_gs(0),_gs(1));//should be equal to _yaw_s
+                        math::Vector<3> _gs_L = _R_LI*_gs_I;
+                        _heading_gs = atan2(_gs_L(0),_gs_L(1));//should be equal to _yaw_s
 
                         _R_arc = _parameters.angular_radius;
+                        _R_arc=math::constrain(_R_arc,0.001f,M_1_PI/2);
+
+                        if(_local_r_s < FLT_EPSILON){
+                                _local_r_s=1;
+                        }
 
                         _L1_arc = _L1_ratio*gs_length/_local_r_s;
 
                         if(_L1_arc / _R_arc > 1.0f && gs_length > 0.0f){
-                                _L1_ratio=_R_arc/gs_length;
+                                _L1_ratio=_R_arc/gs_length*_local_r_s;
                                 _L1_arc=_R_arc;
                         }
 
@@ -976,18 +984,26 @@ FixedwingAttitudeControl::task_main()
                         cos_ang = math::constrain(cos_ang, -1.0f, 1.0f);
                         _CW_arc=acosf(cos_ang);
 
-                        if(_L1_arc<_CW_arc){
-                                _L1_arc=_CW_arc;
+                        if(_L1_arc<_CW_arc-_R_arc){
+                                _L1_arc=_CW_arc-_R_arc;
+                                _L1_ratio=_L1_arc/gs_length*_local_r_s;
                         }
 
-                        float cos_ang2=_rc(2);
-                        cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
-                        _PC_arc=acosf(cos_ang2);
+                        //float cos_ang2=_rc(2);
+                        //cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
+                        _PC_arc=M_PI/2-_parameters.center_elevation;//acosf(cos_ang2);
 
-                        float cos_ang3=_rw_unit(2);
-                        cos_ang3=math::constrain(cos_ang3, -1.0f, 1.0f);
-                        _PW_arc=acosf(cos_ang3);
+                        //float cos_ang3=_rw_unit(2);
+                        //cos_ang3=math::constrain(cos_ang3, -1.0f, 1.0f);
+                        _PW_arc=M_PI/2-_local_el_s;//acosf(cos_ang3);
 
+                        if(_CW_arc < FLT_EPSILON){
+                                _CW_arc=FLT_EPSILON;
+                        }
+
+                        if(_PW_arc < FLT_EPSILON){
+                                _PW_arc=FLT_EPSILON;
+                        }
 
                         float cos_ang4=(cos(_PC_arc)-cos(_CW_arc)*cos(_PW_arc))/(sin(_CW_arc)*sin(_PW_arc));
                         cos_ang4=math::constrain(cos_ang4, -1.0f, 1.0f);
@@ -1007,8 +1023,9 @@ FixedwingAttitudeControl::task_main()
                         if(_local_el_s<_parameters.elevation_min){
                                 _eta=_wrap_pi(_heading_gs);
                         }
+                        _eta=math::constrain(_eta,-M_PI/4,M_PI/4);
 
-                        _a_lat= _K_L1*gs_length*gs_length/_L1_arc*sinf(_eta);
+                        _a_lat= _K_L1*gs_length*/_L1_ratio*sinf(_eta);
 
                         _target_roll=_parameters.p_gain_roll*atan2f(9.81f,_a_lat);
                         _target_roll=math::constrain(_target_roll, -_parameters.bank_angle, _parameters.bank_angle);
