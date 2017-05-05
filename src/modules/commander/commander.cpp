@@ -3595,7 +3595,7 @@ set_control_mode()
 		control_mode.flag_control_rattitude_enabled = true;
 		control_mode.flag_control_altitude_enabled = false;
 		control_mode.flag_control_climb_rate_enabled = false;
-        control_mode.flag_control_position_enabled = false;
+		control_mode.flag_control_position_enabled = false;
 		control_mode.flag_control_velocity_enabled = false;
 		control_mode.flag_control_acceleration_enabled = false;
 		control_mode.flag_control_termination_enabled = false;
