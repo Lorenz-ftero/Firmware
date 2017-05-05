@@ -1340,7 +1340,7 @@ MulticopterPositionControl::task_main()
 
     params_ftero._pitch_transition_final=-0.5f;
     params_ftero._roll_transition_final=1.0f;
-    params_ftero._thrust_transition_final=1.0f;
+    params_ftero._thrust_transition_final=0.7f;
     params_ftero._transition_duration =5.0f;
 
 
