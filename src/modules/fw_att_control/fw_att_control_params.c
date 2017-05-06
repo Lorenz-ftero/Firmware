@@ -112,8 +112,8 @@ PARAM_DEFINE_FLOAT(FW_TR_SEL, .79f);
  * Roll proportional gain on the roll sp
  *
  *
- * @min 1
- * @max 40
+ * @min 0.1
+ * @max 4
  * @decimal 1
  * @increment 0.1
  * @group FW Attitude Control
