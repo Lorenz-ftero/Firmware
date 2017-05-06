@@ -949,28 +949,20 @@ FixedwingAttitudeControl::task_main()
                         math::Matrix<3, 3>_R_corr;
                         _R_corr.from_euler(0.0f,M_PI_2_F,-M_PI_2_F);
 
-
                         math::Matrix<3, 3>_R_NED_PUI=(_R_LI*_R_corr).transposed();
-
 
                         math::Vector<3> _gs;
                         _gs(0)=_vehicle_local_position.vx;
                         _gs(1)=_vehicle_local_position.vy;
                         _gs(2)=_vehicle_local_position.vz;
 
-                        math::Vector<3> _gs_I;
-                        _gs_I(0)=_gs(1);
-                        _gs_I(1)=_gs(0);
-                        _gs_I(2)=-_gs(2);
-
                         float gs_length=_gs.length();
 
-
-                        math::Vector<3> _gs_L = //_R_LI*_gs_I;
+                        math::Vector<3> _gs_L = _R_NED_PUI*_gs;
                         _heading_gs = atan2(_gs_L(0),_gs_L(1));//should be equal to _yaw_s
 
                         _R_arc = _parameters.angular_radius;
-                        _R_arc=math::constrain(_R_arc,0.001f,M_1_PI/2);
+                        _R_arc=math::constrain(_R_arc,0.001f,M_PI_F/2);
 
                         if(_local_r_s < FLT_EPSILON){
                                 _local_r_s=1;
@@ -994,11 +986,11 @@ FixedwingAttitudeControl::task_main()
 
                         //float cos_ang2=_rc(2);
                         //cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
-                        _PC_arc=M_PI/2-_parameters.center_elevation;//acosf(cos_ang2);
+                        _PC_arc=M_PI_2_F-_parameters.center_elevation;//acosf(cos_ang2);
 
                         //float cos_ang3=_rw_unit(2);
                         //cos_ang3=math::constrain(cos_ang3, -1.0f, 1.0f);
-                        _PW_arc=M_PI/2-_local_el_s;//acosf(cos_ang3);
+                        _PW_arc=M_PI_2_F-_local_el_s;//acosf(cos_ang3);
 
                         if(_CW_arc < FLT_EPSILON){
                                 _CW_arc=FLT_EPSILON;
@@ -1026,7 +1018,7 @@ FixedwingAttitudeControl::task_main()
                         if(_local_el_s<_parameters.elevation_min){
                                 _eta=_heading_gs;
                         }
-                        _eta=math::constrain(_eta,-M_PI/4,M_PI/4);
+                        _eta=math::constrain(_eta,-M_PI_4_F ,M_PI_4_F);
 
                         _a_lat= _K_L1*gs_length*/_L1_ratio*sinf(_eta);
                         float a_lat_gravity=9.81*cosf(_local_el_s)*sinf(_heading_gs);
