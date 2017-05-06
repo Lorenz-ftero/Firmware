@@ -236,6 +236,8 @@ private:
                 float p_gain_roll;
                 int circle_dir;
                 float elevation_min;
+                float enable_constant_bank;
+                float bank_constant_bank;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -297,6 +299,8 @@ private:
                 param_t p_gain_roll;
                 param_t circle_dir;
                 param_t elevation_min;
+                param_t enable_constant_bank;
+                param_t bank_constant_bank;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
@@ -545,6 +549,8 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
         _parameter_handles.p_gain_roll = param_find("FW_TR_P_ROLL");
         _parameter_handles.circle_dir = param_find("FW_TR_DIR");
         _parameter_handles.elevation_min = param_find("FW_TR_SEL");
+        _parameter_handles.enable_constant_bank = param_find("FW_TR_ECM");
+        _parameter_handles.bank_constant_bank = param_find("FW_TR_ECMB");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -646,6 +652,8 @@ FixedwingAttitudeControl::parameters_update()
         param_get(_parameter_handles.p_gain_roll, &_parameters.p_gain_roll);
         param_get(_parameter_handles.circle_dir, &_parameters.circle_dir);
         param_get(_parameter_handles.elevation_min, &_parameters.elevation_min);
+        param_get(_parameter_handles.enable_constant_bank, &_parameters.enable_constant_bank);
+        param_get(_parameter_handles.bank_constant_bank, &_parameters.bank_constant_bank);
 
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
@@ -935,20 +943,15 @@ FixedwingAttitudeControl::task_main()
 
                         _local_r_s=sqrtf(_x_inert*_x_inert+_y_inert*_y_inert+_z_inert*_z_inert);
                         _local_az_s=atan2(_y_inert,_x_inert);
-                        _local_el_s=atan2(_z_inert,sqrtf(_x_inert*_x_inert+_y_inert*_y_inert));
+                        _local_el_s=atan2(sqrtf(_x_inert*_x_inert+_y_inert*_y_inert),_z_inert);
 
-                        _R_LI.from_euler(0,-_local_el_s-M_PI_F/2,_local_az_s);
-                        //const float d1[9]={
-                          //      -cosf(_local_az_s)*sinf(_local_el_s), -sinf(_local_az_s), -cosf(_local_az_s)*cosf(_local_el_s),
-                            //    -sinf(_local_az_s), cosf(_local_az_s), 0,
-                              //  -cosf(_local_az_s)*cosf(_local_el_s), -cosf(_local_el_s)*sinf(_local_az_s), -sinf(_local_el_s)
-                        //};
-                        //_R_LI.set(d1);
+                        _R_LI.from_euler(-_local_el_s, 0,-_local_az_s);
+                        math::Matrix<3, 3>_R_corr;
+                        _R_corr.from_euler(0.0f,M_PI_2_F,-M_PI_2_F);
 
-                        math::Matrix<3, 3> _R_pitch_90;
-                        //_R_pitch_90.from_euler(0,M_PI_F/2,0);
 
-                        //_R_s=_R_pitch_90.transposed()*_R_s;
+                        math::Matrix<3, 3>_R_NED_PUI=(_R_LI*_R_corr).transposed();
+
 
                         math::Vector<3> _gs;
                         _gs(0)=_vehicle_local_position.vx;
@@ -963,7 +966,7 @@ FixedwingAttitudeControl::task_main()
                         float gs_length=_gs.length();
 
 
-                        math::Vector<3> _gs_L = _R_LI*_gs_I;
+                        math::Vector<3> _gs_L = //_R_LI*_gs_I;
                         _heading_gs = atan2(_gs_L(0),_gs_L(1));//should be equal to _yaw_s
 
                         _R_arc = _parameters.angular_radius;
@@ -1032,15 +1035,7 @@ FixedwingAttitudeControl::task_main()
                         _target_roll=_parameters.p_gain_roll*atan2f(9.81f,_a_lat);
                         _target_roll=math::constrain(_target_roll, -_parameters.bank_angle, _parameters.bank_angle);
 
-                        //compute the rotationstate relativ to this frame
-                        //_R_relativ=_R.transposed()*_R_s.transposed();
-                        _R_relativ=_R*_R_LI.transposed();
-                        //_R_relativ=_R.transposed()*_R_s;
-                        //_R_relativ=_R*_R_s;
-                        //_R_relativ=_R_s.transposed()*_R.transposed();
-                        //_R_relativ=_R_s*_R.transposed();
-                        //_R_relativ=_R_s.transposed()*_R;
-                        //_R_relativ=_R_s*_R;
+                        _R_relativ=_R_NED_PUI*_R;
 
                         //compute the euler angles relativ to this frame
                         math::Vector<3> euler_angles_s;
@@ -1315,11 +1310,14 @@ FixedwingAttitudeControl::task_main()
                                         //roll_sp = float(_parameters.bank_angle);
                                         warnx("in if traction flag");
                                         if(PX4_ISFINITE(_target_roll)){
-                                                roll_sp=0;//_target_roll;
+                                                roll_sp=_target_roll;
                                                 warnx("roll target finite");
                                         }else{
                                                 roll_sp = 0;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
                                                 warnx("roll target infinite, used 0 instead");
+                                        }
+                                        if(_parameters.enable_constant_bank > 0.5){
+                                                roll_sp=_parameters.bank_constant_bank;
                                         }
                                         pitch_sp = 0;
                                         _att_sp.thrust = _manual.z;

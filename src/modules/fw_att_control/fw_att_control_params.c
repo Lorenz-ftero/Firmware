@@ -72,6 +72,30 @@ PARAM_DEFINE_INT32(FW_TR_DIR, 0);
 PARAM_DEFINE_FLOAT(FW_TR_BANK, 1);
 
 /**
+ * Enable Constant Bank Mode
+ *
+ *
+ * @min 0
+ * @max 1
+ * @decimal 1
+ * @increment 0.1
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_ECM, 0.0f);
+
+/**
+ * Bank Angle for constant Bank Mode
+ *
+ *
+ * @min -1
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_ECMB, .3);
+
+/**
  * Safety Elevation
  *
  * When Wing gets lower than this elevation angle it will try to reach the top of the shpere
