@@ -142,6 +142,8 @@ private:
 	bool _task_should_exit;
 	int _control_task;		//task handle for VTOL attitude controller
 	orb_advert_t _mavlink_log_pub;	// mavlink log uORB handle
+    hrt_abstime _transition_start_ftero; //transition start absolute time
+
 
 	/* handlers for subscriptions */
 	int	_v_att_sub;				//vehicle attitude subscription

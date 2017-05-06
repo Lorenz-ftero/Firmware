@@ -2172,7 +2172,6 @@ MulticopterPositionControl::task_main()
 
 
                 if(_control_mode.flag_control_transition_ftero_enabled){
-                    PX4_INFO("in transition mc");
 
 
                     float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);

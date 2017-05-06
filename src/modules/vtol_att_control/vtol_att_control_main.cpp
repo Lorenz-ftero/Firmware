@@ -469,7 +469,8 @@ bool
 VtolAttitudeControl::is_fixed_wing_requested()
 {
 	bool to_fw = false;
-    hrt_abstime _transition_start_ftero;
+
+
 
 
     /*we differentiate between transition mode and everything else,  */
@@ -490,8 +491,11 @@ VtolAttitudeControl::is_fixed_wing_requested()
 
     if(_v_control_mode.flag_control_transition_ftero_enabled){
        float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
-       if(elapsed_time_transition< 10* 1000000.0f){
+       if(elapsed_time_transition< _params.transition_duration_ftero* 1000000.0f){
            to_fw =false;
+       }
+       else if(_manual_control_sp.transition_switch == manual_control_setpoint_s::SWITCH_POS_ON){
+           to_fw = true;
        }
        else
            to_fw =true;
