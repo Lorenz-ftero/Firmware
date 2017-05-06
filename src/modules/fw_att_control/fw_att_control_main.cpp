@@ -945,7 +945,7 @@ FixedwingAttitudeControl::task_main()
                         //};
                         //_R_LI.set(d1);
 
-                        //math::Matrix<3, 3> _R_pitch_90;
+                        math::Matrix<3, 3> _R_pitch_90;
                         //_R_pitch_90.from_euler(0,M_PI_F/2,0);
 
                         //_R_s=_R_pitch_90.transposed()*_R_s;
@@ -1021,18 +1021,16 @@ FixedwingAttitudeControl::task_main()
                         _eta=_heading_gs+center_dir*(_ber_c+loiter_dir*_ber_ref);
 
                         if(_local_el_s<_parameters.elevation_min){
-                                _eta=_wrap_pi(_heading_gs);
+                                _eta=_heading_gs;
                         }
                         _eta=math::constrain(_eta,-M_PI/4,M_PI/4);
 
                         _a_lat= _K_L1*gs_length*/_L1_ratio*sinf(_eta);
+                        float a_lat_gravity=9.81*cosf(_local_el_s)*sinf(_heading_gs);
+                        _a_lat-=a_lat_gravity;
 
                         _target_roll=_parameters.p_gain_roll*atan2f(9.81f,_a_lat);
                         _target_roll=math::constrain(_target_roll, -_parameters.bank_angle, _parameters.bank_angle);
-
-
-
-
 
                         //compute the rotationstate relativ to this frame
                         //_R_relativ=_R.transposed()*_R_s.transposed();
