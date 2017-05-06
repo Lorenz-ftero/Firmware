@@ -133,6 +133,9 @@ VtolAttitudeControl::VtolAttitudeControl() :
 	_params_handles.elevons_mc_lock = param_find("VT_ELEV_MC_LOCK");
 	_params_handles.fw_min_alt = param_find("VT_FW_MIN_ALT");
 
+    /*transition params*/
+    _params_handles.transition_duration_ftero = param_find("TRANS_DUR_VTOL");
+
 	/* fetch initial parameter values */
 	parameters_update();
 
@@ -466,16 +469,34 @@ bool
 VtolAttitudeControl::is_fixed_wing_requested()
 {
 	bool to_fw = false;
+    hrt_abstime _transition_start_ftero;
 
-    if (_manual_control_sp.transition_switch != manual_control_setpoint_s::SWITCH_POS_NONE &&
-	    _v_control_mode.flag_control_manual_enabled) {
-		to_fw = (_manual_control_sp.transition_switch == manual_control_setpoint_s::SWITCH_POS_ON);
 
-	} else {
-		// listen to transition commands if not in manual or mode switch is not mapped
-		to_fw = (_transition_command == vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW);
+    /*we differentiate between transition mode and everything else,  */
+    if(!_v_control_mode.flag_control_transition_ftero_enabled){
+
+        if (_manual_control_sp.transition_switch != manual_control_setpoint_s::SWITCH_POS_NONE &&
+            _v_control_mode.flag_control_manual_enabled) {
+            to_fw = (_manual_control_sp.transition_switch == manual_control_setpoint_s::SWITCH_POS_ON);
+
+        }   else {
+            // listen to transition commands if not in manual or mode switch is not mapped
+            to_fw = (_transition_command == vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW);
+        }
+
+        _transition_start_ftero = hrt_absolute_time();
+
     }
 
+    if(_v_control_mode.flag_control_transition_ftero_enabled){
+       float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
+       if(elapsed_time_transition< 10* 1000000.0f){
+           to_fw =false;
+       }
+       else
+           to_fw =true;
+
+    }
 	// handle abort request
 	if (_abort_front_transition) {
 		if (to_fw) {
@@ -559,6 +580,10 @@ VtolAttitudeControl::parameters_update()
 	/* minimum relative altitude for FW mode (QuadChute) */
 	param_get(_params_handles.fw_min_alt, &v);
 	_params.fw_min_alt = v;
+
+    /* transition parameter*/
+    param_get(_params_handles.transition_duration_ftero, & _params.transition_duration_ftero);
+
 
 
 	// update the parameters of the instances of base VtolType

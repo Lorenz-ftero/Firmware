@@ -200,7 +200,7 @@ private:
 		param_t acc_hor_max;
 		param_t alt_mode;
 		param_t opt_recover;
-
+        param_t transition_duration_ftero;
 	}		_params_handles;		/**< handles for interesting parameters */
 
 	struct {
@@ -225,6 +225,7 @@ private:
 		float vel_max_up;
 		float vel_max_down;
 		uint32_t alt_mode;
+        float transition_duration_ftero;
 
 		int opt_recover;
 
@@ -282,7 +283,6 @@ private:
       float _pitch_transition_final;
       float _roll_transition_final;
       float _thrust_transition_final;
-      float _transition_duration;
 
     } params_ftero;
 
@@ -450,7 +450,7 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_params.pos_p.zero();
 	_params.vel_p.zero();
 	_params.vel_i.zero();
-	_params.vel_d.zero();
+    _params.vel_d.zero();
 	_params.vel_max.zero();
 	_params.vel_cruise.zero();
 	_params.vel_ff.zero();
@@ -482,7 +482,10 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	// transitional support: Copy param values from max to down
 	// param so that max param can be renamed in 1-2 releases
 	// (currently at 1.3.0)
-	float p;
+
+    _params_handles.transition_duration_ftero = param_find("TRANS_DUR_MC");
+
+    float p;
 	param_get(param_find("MPC_Z_VEL_MAX"), &p);
 	param_set(param_find("MPC_Z_VEL_MAX_DN"), &p);
 
@@ -567,6 +570,8 @@ MulticopterPositionControl::parameters_update(bool force)
 		param_get(_params_handles.tilt_max_land, &_params.tilt_max_land);
 		_params.tilt_max_land = math::radians(_params.tilt_max_land);
 
+        param_get(_params_handles.transition_duration_ftero, &_params.transition_duration_ftero);
+
 		float v;
 		uint32_t v_i;
 		param_get(_params_handles.xy_p, &v);
@@ -582,7 +587,7 @@ MulticopterPositionControl::parameters_update(bool force)
 		param_get(_params_handles.xy_vel_i, &v);
 		_params.vel_i(0) = v;
 		_params.vel_i(1) = v;
-		param_get(_params_handles.z_vel_i, &v);
+        param_get(_params_handles.z_vel_i, &v);
 		_params.vel_i(2) = v;
 		param_get(_params_handles.xy_vel_d, &v);
 		_params.vel_d(0) = v;
@@ -1341,7 +1346,6 @@ MulticopterPositionControl::task_main()
     params_ftero._pitch_transition_final=-0.5f;
     params_ftero._roll_transition_final=1.0f;
     params_ftero._thrust_transition_final=0.7f;
-    params_ftero._transition_duration =5.0f;
 
 
 
@@ -2173,24 +2177,24 @@ MulticopterPositionControl::task_main()
 
                     float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
 
-                    if(elapsed_time_transition<params_ftero._transition_duration* 1000000.0f){
+                    if(elapsed_time_transition<_params.transition_duration_ftero* 1000000.0f){
 
                     /*ceate time dependant pitch angle set point, for first transition*/
                     _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	+ (params_ftero._pitch_transition_final - _pitch_transition_start) *
-                                elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f);
+                                elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
                     /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);
 */
                     _att_sp.thrust = _thrust_transition_start+(params_ftero._thrust_transition_final-_thrust_transition_start)*
-                                elapsed_time_transition/ (params_ftero._transition_duration*1000000.0f);
+                                elapsed_time_transition/ (_params.transition_duration_ftero*1000000.0f);
 
                     _att_sp.roll_body = _att_sp.roll_body+_roll_transition_start +(params_ftero._roll_transition_final - _roll_transition_start)*
-                                elapsed_time_transition/ (params_ftero._transition_duration* 1000000.0f);
+                                elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
                     /*_att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);
 */
 
                     }
 
-                    if(elapsed_time_transition>=params_ftero._transition_duration* 1000000.0f){
+                    if(elapsed_time_transition>=_params.transition_duration_ftero* 1000000.0f){
 
                         PX4_INFO("transition ended mc");
                      }
