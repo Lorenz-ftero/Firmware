@@ -1020,8 +1020,8 @@ FixedwingAttitudeControl::task_main()
                         }
                         _eta=math::constrain(_eta,-M_PI_4_F ,M_PI_4_F);
 
-                        _a_lat= _K_L1*gs_length*/_L1_ratio*sinf(_eta);
-                        float a_lat_gravity=9.81*cosf(_local_el_s)*sinf(_heading_gs);
+                        _a_lat= _K_L1*gs_length/_L1_ratio*sinf(_eta);
+                        float a_lat_gravity=9.81f*cosf(_local_el_s)*sinf(_heading_gs);
                         _a_lat-=a_lat_gravity;
 
                         _target_roll=_parameters.p_gain_roll*atan2f(9.81f,_a_lat);
@@ -1308,7 +1308,7 @@ FixedwingAttitudeControl::task_main()
                                                 roll_sp = 0;//_parameters.p_gain_roll * (2*velocity_tan2.length_squared()/heading_ref2.length()*float(sin(angle_error)));
                                                 warnx("roll target infinite, used 0 instead");
                                         }
-                                        if(_parameters.enable_constant_bank > 0.5){
+                                        if(_parameters.enable_constant_bank > 0.5f){
                                                 roll_sp=_parameters.bank_constant_bank;
                                         }
                                         pitch_sp = 0;
