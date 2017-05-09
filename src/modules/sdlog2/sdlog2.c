@@ -1285,8 +1285,10 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_LAND_s log_LAND;
 			struct log_RPL6_s log_RPL6;
 			struct log_LOAD_s log_LOAD;
-			struct log_DPRS_s log_DPRS;
-                        struct log_TRST_s log_TRST;
+                        struct log_DPRS_s log_DPRS;
+                        struct log_TRS1_s log_TRS1;
+                        struct log_TRS2_s log_TRS2;
+                        struct log_TRS3_s log_TRS3;
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -2328,18 +2330,56 @@ int sdlog2_thread_main(int argc, char *argv[])
 		}
                 /*  --- TRACTION STATUS --- */
                 if (copy_if_updated(ORB_ID(traction_status), &subs.traction_status_sub, &buf.traction_status)){
-                        log_msg.msg_type = LOG_TRST_MSG;
-                        log_msg.body.log_TRST.x = buf.traction_status.pos_inert[0];
-                        log_msg.body.log_TRST.y = buf.traction_status.pos_inert[1];
-                        log_msg.body.log_TRST.z = buf.traction_status.pos_inert[2];
-                        log_msg.body.log_TRST.r = buf.traction_status.pos_local_sphere[0];
-                        log_msg.body.log_TRST.phi = buf.traction_status.pos_local_sphere[1];
-                        log_msg.body.log_TRST.theta = buf.traction_status.pos_local_sphere[2];
-                        log_msg.body.log_TRST.roll_s = buf.traction_status.att_relativ[0];
-                        log_msg.body.log_TRST.pitch_s = buf.traction_status.att_relativ[1];
-                        log_msg.body.log_TRST.yaw_s = buf.traction_status.att_relativ[2];
-                        log_msg.body.log_TRST.roll_t = buf.traction_status.roll_target;
-                        LOGBUFFER_WRITE_AND_COUNT(TRST);
+                        log_msg.msg_type = LOG_TRS1_MSG;
+                        log_msg.body.log_TRS1.pos_inert_x = buf.traction_status.pos_inert_x;
+                        log_msg.body.log_TRS1.pos_inert_y = buf.traction_status.pos_inert_y;
+                        log_msg.body.log_TRS1.pos_inert_z = buf.traction_status.pos_inert_z;
+                        log_msg.body.log_TRS1.local_r = buf.traction_status.local_r;
+                        log_msg.body.log_TRS1.local_az = buf.traction_status.local_az;
+                        log_msg.body.log_TRS1.local_el = buf.traction_status.local_el;
+                        log_msg.body.log_TRS1.roll = buf.traction_status.roll;
+                        log_msg.body.log_TRS1.pitch = buf.traction_status.pitch;
+                        log_msg.body.log_TRS1.yaw = buf.traction_status.yaw;
+                        log_msg.body.log_TRS1.roll_s = buf.traction_status.roll_s;
+                        log_msg.body.log_TRS1.pitch_s = buf.traction_status.pitch_s;
+                        log_msg.body.log_TRS1.yaw_s = buf.traction_status.yaw_s;
+                        log_msg.body.log_TRS1.L1_ratio = buf.traction_status.L1_ratio;
+                        log_msg.body.log_TRS1.L1_K = buf.traction_status.L1_K;
+                        log_msg.body.log_TRS1.L1_arc = buf.traction_status.L1_arc;
+                        log_msg.body.log_TRS1.R_arc = buf.traction_status.R_arc;
+                        LOGBUFFER_WRITE_AND_COUNT(TRS1);
+                        log_msg.msg_type = LOG_TRS2_MSG;
+                        log_msg.body.log_TRS2.PC_arc = buf.traction_status.PC_arc;
+                        log_msg.body.log_TRS2.PW_arc = buf.traction_status.PW_arc;
+                        log_msg.body.log_TRS2.CW_arc = buf.traction_status.CW_arc;
+                        log_msg.body.log_TRS2.heading_gs = buf.traction_status.heading_gs;
+                        log_msg.body.log_TRS2.ber_c = buf.traction_status.ber_c;
+                        log_msg.body.log_TRS2.ber_ref = buf.traction_status.ber_ref;
+                        log_msg.body.log_TRS2.eta = buf.traction_status.eta;
+                        log_msg.body.log_TRS2.a_lat = buf.traction_status.a_lat;
+                        log_msg.body.log_TRS2.target_roll = buf.traction_status.target_roll;
+                        log_msg.body.log_TRS2.param_EL = buf.traction_status.param_EL;
+                        log_msg.body.log_TRS2.param_AZ = buf.traction_status.param_AZ;
+                        log_msg.body.log_TRS2.param_RAD = buf.traction_status.param_RAD;
+                        log_msg.body.log_TRS2.param_DAMP = buf.traction_status.param_DAMP;
+                        log_msg.body.log_TRS2.param_PER = buf.traction_status.param_PER;
+                        log_msg.body.log_TRS2.param_P_ROLL = buf.traction_status.param_P_ROLL;
+                        log_msg.body.log_TRS2.param_BANK = buf.traction_status.param_BANK;
+                        LOGBUFFER_WRITE_AND_COUNT(TRS2);
+                        log_msg.msg_type = LOG_TRS3_MSG;
+                        log_msg.body.log_TRS3.param_DIR = buf.traction_status.param_DIR;
+                        log_msg.body.log_TRS3.param_SEL = buf.traction_status.param_SEL;
+                        log_msg.body.log_TRS3.reserve_0 = buf.traction_status.reserve_0;
+                        log_msg.body.log_TRS3.reserve_1 = buf.traction_status.reserve_1;
+                        log_msg.body.log_TRS3.reserve_2 = buf.traction_status.reserve_2;
+                        log_msg.body.log_TRS3.reserve_3 = buf.traction_status.reserve_3;
+                        log_msg.body.log_TRS3.reserve_4 = buf.traction_status.reserve_4;
+                        log_msg.body.log_TRS3.reserve_5 = buf.traction_status.reserve_5;
+                        log_msg.body.log_TRS3.reserve_6 = buf.traction_status.reserve_6;
+                        log_msg.body.log_TRS3.reserve_7 = buf.traction_status.reserve_7;
+                        log_msg.body.log_TRS3.reserve_8 = buf.traction_status.reserve_8;
+                        log_msg.body.log_TRS3.reserve_9 = buf.traction_status.reserve_9;
+                        LOGBUFFER_WRITE_AND_COUNT(TRS3);
                 }
 
 		pthread_mutex_lock(&logbuffer_mutex);

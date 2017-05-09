@@ -457,7 +457,7 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_params.vel_max.zero();
 	_params.vel_cruise.zero();
 	_params.vel_ff.zero();
-    _params.sp_offs_max.zero();
+	_params.sp_offs_max.zero();
 
 	_pos.zero();
 	_pos_sp.zero();

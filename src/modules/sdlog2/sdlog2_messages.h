@@ -635,18 +635,58 @@ struct log_DPRS_s {
 };
 
 /* --- TRACTION PHASE STATUS --- */
-#define LOG_TRST_MSG 63
-struct log_TRST_s {
-        float x;
-        float y;
-        float z;
-        float r;
-        float theta;
-        float phi;
-        float roll_s;
-        float pitch_s;
-        float yaw_s;
-        float roll_t;
+#define LOG_TRS1_MSG 63
+struct log_TRS1_s {
+	float pos_inert_x;
+	float pos_inert_y;
+	float pos_inert_z;
+	float local_r;
+	float local_az;
+	float local_el;
+	float roll;
+	float pitch;
+	float yaw;
+	float roll_s;
+	float pitch_s;
+	float yaw_s;
+	float L1_ratio;
+	float L1_K;
+	float L1_arc;
+	float R_arc;
+};
+#define LOG_TRS2_MSG 64
+struct log_TRS2_s {
+	float PC_arc;
+	float PW_arc;
+	float CW_arc;
+	float heading_gs;
+	float ber_c;
+	float ber_ref;
+	float eta;
+	float a_lat;
+	float target_roll;
+	float param_EL;
+	float param_AZ;
+	float param_RAD;
+	float param_DAMP;
+	float param_PER;
+	float param_P_ROLL;
+	float param_BANK;
+};
+#define LOG_TRS3_MSG 65
+struct log_TRS3_s {
+	float param_DIR;
+	float param_SEL;
+	float reserve_0;
+	float reserve_1;
+	float reserve_2;
+	float reserve_3;
+	float reserve_4;
+	float reserve_5;
+	float reserve_6;
+	float reserve_7;
+	float reserve_8;
+	float reserve_9;
 };
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
@@ -743,8 +783,10 @@ static const struct log_format_s log_formats[] = {
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-        LOG_FORMAT(PARM, "Nf", "Name,Value"),
-        LOG_FORMAT(TRST, "fffffffff", "X,Y,Z,R,Theta,Phi,Roll_relativ,pitch_relativ,yaw_relativ")
+	LOG_FORMAT(PARM, "Nf", "Name,Value"),
+	LOG_FORMAT(TRS1, "ffffffffffffffff", "x,y,z,r,az,el,ro,pi,ya,ro_s,pi_s,ya_s,L1_ra,L1_K,L1,R"),
+	LOG_FORMAT(TRS2, "ffffffffffffffff", "PC,PW,CW,h_gs,_c,_ref,eta,a_lat,t_ro,EL,AZ,RAD,D,P,P_RO,BANK"),
+	LOG_FORMAT(TRS3, "ffffffffffff", "DIR,SEL,res0,res1,res2,res3,res4,res5,res6,res7,res8,res9")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);

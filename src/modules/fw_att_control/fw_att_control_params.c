@@ -46,52 +46,139 @@
  */
 
 /**
- * Roll proportional gain on the roll sp
+ * Direction of Circling
  *
+ * 0:
+ * 1:
  *
- * @min 0.005
- * @max 1.0
- * @decimal 3
- * @increment 0.005
+ * @min 0
+ * @max 1
+ * @value 0 clockwise
+ * @value 1 counterclockwise
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_P_ROLL_TR, 0.01f);
+PARAM_DEFINE_INT32(FW_TR_DIR, 0);
 
 /**
- * Refrece Radius of circle for Traction phase
+ * Maximum Bank Angle
  *
- * @unit m
+ *
  * @min 0
- * @max 100
+ * @max 1
  * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_BANK, 1);
+
+/**
+ * Enable Constant Bank Mode
+ *
+ *
+ * @min 0
+ * @max 1
+ * @decimal 1
  * @increment 0.1
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_RAD1_TR, 50.0f);
+PARAM_DEFINE_FLOAT(FW_TR_ECM, 0.0f);
 
 /**
- * Preview in circle for Traction phase
+ * Bank Angle for constant Bank Mode
+ *
+ *
+ * @min -1
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_ECMB, .3);
+
+/**
+ * Safety Elevation
+ *
+ * When Wing gets lower than this elevation angle it will try to reach the top of the shpere
+ *
+ * @min 0
+ * @max 1.57
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_SEL, .79f);
+
+/**
+ * Roll proportional gain on the roll sp
+ *
+ *
+ * @min 0.1
+ * @max 4
+ * @decimal 1
+ * @increment 0.1
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_P_ROLL, 1.f);
+
+/**
+ * Refrece Radius Angle of circle for Traction phase
  *
  * @unit rad
  * @min 0
- * @max 3.2
+ * @max 1
  * @decimal 2
  * @increment 0.05
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_PRE_TR, 1.0f);
+PARAM_DEFINE_FLOAT(FW_TR_RAD, .3);
 
 /**
- * Bank Angle for Traction phase
+ * elevation of center of circle
  *
- * @unit 90 degs
- * @min -1.0
- * @max 1.0
+ * @unit rad
+ * @min 0
+ * @max 1.57
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_EL, 1.57f);
+
+/**
+ * azimuth of center of circle
+ *
+ * @unit rad
+ * @min 0
+ * @max 6.28
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_AZ, 0.f);
+
+/**
+ * L1 spherical damping
+ *
+ * @unit scalar
+ * @min 0.2
+ * @max 4
  * @decimal 2
  * @increment 0.05
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_BANK_TR, 0.0f);
+PARAM_DEFINE_FLOAT(FW_TR_DAMP, 0.71f);
+
+/**
+ * L1 spherical period
+ *
+ * @unit scalar
+ * @min 2
+ * @max 10
+ * @decimal 2
+ * @increment 0.05
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_PER, 4.44f);
 
 /**
  * Attitude Roll Time Constant
