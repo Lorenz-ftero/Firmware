@@ -201,6 +201,7 @@ private:
 		param_t alt_mode;
 		param_t opt_recover;
         param_t pitch_offset;
+        param_t transition_duration_ftero;
 
 	}		_params_handles;		/**< handles for interesting parameters */
 
@@ -227,6 +228,7 @@ private:
 		float vel_max_down;
         uint32_t alt_mode;
         float pitch_offset;
+        float transition_duration_ftero;
 
 		int opt_recover;
 
@@ -271,6 +273,23 @@ private:
 	float _acc_z_lp;
 	float _takeoff_thrust_sp;
 	bool control_vel_enabled_prev;	/**< previous loop was in velocity controlled mode (control_state.flag_control_velocity_enabled) */
+
+
+    /* used for ftero transition*/
+    float _thrust_transition_start; // throttle value when we start the front transition
+    float _yaw_transition_start;	// yaw angle in which transition will take place
+    float _pitch_transition_start;  // pitch angle at the start of transition (tailsitter)
+    float _roll_transition_start; // roll angle at the start of transition (tailsitter)
+    hrt_abstime _transition_start_ftero; //time when transition start
+
+    struct {
+      float _pitch_transition_final;
+      float _roll_transition_final;
+      float _thrust_transition_final;
+
+    } params_ftero;
+
+
 
 	// counters for reset events on position and velocity states
 	// they are used to identify a reset event
@@ -467,7 +486,10 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	// transitional support: Copy param values from max to down
 	// param so that max param can be renamed in 1-2 releases
 	// (currently at 1.3.0)
-	float p;
+
+    _params_handles.transition_duration_ftero = param_find("TRANS_DUR_MC");
+
+    float p;
 	param_get(param_find("MPC_Z_VEL_MAX"), &p);
 	param_set(param_find("MPC_Z_VEL_MAX_DN"), &p);
 
@@ -552,6 +574,7 @@ MulticopterPositionControl::parameters_update(bool force)
 		param_get(_params_handles.tilt_max_land, &_params.tilt_max_land);
 		_params.tilt_max_land = math::radians(_params.tilt_max_land);
         param_get(_params_handles.pitch_offset, &_params.pitch_offset);
+        param_get(_params_handles.transition_duration_ftero,&_params.transition_duration_ftero);
 
 		float v;
 		uint32_t v_i;
@@ -1323,6 +1346,11 @@ MulticopterPositionControl::task_main()
 	_pos_sp_triplet_sub = orb_subscribe(ORB_ID(position_setpoint_triplet));
 	_local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	_global_vel_sp_sub = orb_subscribe(ORB_ID(vehicle_global_velocity_setpoint));
+
+    params_ftero._pitch_transition_final=-0.5f;
+    params_ftero._roll_transition_final=1.0f;
+    params_ftero._thrust_transition_final=0.9f;
+
 
 
 	parameters_update(true);
@@ -2131,10 +2159,56 @@ MulticopterPositionControl::task_main()
 				}
 			}
 
+            if(!_control_mode.flag_control_transition_ftero_enabled){
+                _yaw_transition_start = _att_sp.yaw_body;
+                _pitch_transition_start = _att_sp.pitch_body;
+                _roll_transition_start = _att_sp.roll_body;
+                _thrust_transition_start = _att_sp.thrust;
+                _transition_start_ftero = hrt_absolute_time();
+
+            }
+
 			/* control roll and pitch directly if no aiding velocity controller is active */
 			if (!_control_mode.flag_control_velocity_enabled) {
 				_att_sp.roll_body = _manual.y * _params.man_roll_max;
-                _att_sp.pitch_body = -_manual.x * _params.man_pitch_max + _params.pitch_offset;
+				_att_sp.pitch_body = -_manual.x * _params.man_pitch_max;
+
+
+
+                if(_control_mode.flag_control_transition_ftero_enabled){
+
+
+                    float elapsed_time_transition = hrt_elapsed_time(&_transition_start_ftero);
+
+                    if(elapsed_time_transition<_params.transition_duration_ftero* 1000000.0f){
+
+                    /*ceate time dependant pitch angle set point, for first transition*/
+                    _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	+ (params_ftero._pitch_transition_final - _pitch_transition_start) *
+                                elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
+                    /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);
+*/
+                    _att_sp.thrust = _thrust_transition_start+(params_ftero._thrust_transition_final-_thrust_transition_start)*
+                                elapsed_time_transition/ (_params.transition_duration_ftero*1000000.0f);
+
+
+
+                    /* if(elapsed_time_transition>3.0f*1000000.0f){
+
+                    _att_sp.roll_body = _att_sp.roll_body+_roll_transition_start +(params_ftero._roll_transition_final - _roll_transition_start)*
+                                elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
+                    _att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);
+                    }*/
+
+                    }
+
+                    if(elapsed_time_transition>=_params.transition_duration_ftero* 1000000.0f){
+
+                        PX4_INFO("transition ended mc");
+                     }
+
+                }
+
+
 
 				/* only if optimal recovery is not used, modify roll/pitch */
 				if (_params.opt_recover <= 0) {

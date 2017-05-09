@@ -315,3 +315,13 @@ PARAM_DEFINE_INT32(VT_NAV_FORCE_VT, 1);
  * @group VTOL Attitude Control
  */
 PARAM_DEFINE_FLOAT(VT_FW_MIN_ALT, 0.0f);
+
+/**
+ * Transition duration for ftero
+ * @min 0
+ * @max 10
+ * @decimal 1
+ * @increment 0.1
+ * @group Multicopter Position Control
+ */
+PARAM_DEFINE_FLOAT(TRANS_DUR_VTOL,2);

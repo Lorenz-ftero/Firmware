@@ -142,6 +142,8 @@ private:
 	bool _task_should_exit;
 	int _control_task;		//task handle for VTOL attitude controller
 	orb_advert_t _mavlink_log_pub;	// mavlink log uORB handle
+    hrt_abstime _transition_start_ftero; //transition start absolute time
+
 
 	/* handlers for subscriptions */
 	int	_v_att_sub;				//vehicle attitude subscription
@@ -210,6 +212,8 @@ private:
 		param_t vtol_type;
 		param_t elevons_mc_lock;
 		param_t fw_min_alt;
+        param_t transition_duration_ftero;
+
 	} _params_handles;
 
 	/* for multicopters it is usual to have a non-zero idle speed of the engines

@@ -667,6 +667,7 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 {
 	navigation_state_t nav_state_old = status->nav_state;
 
+
 	bool armed = (status->arming_state == vehicle_status_s::ARMING_STATE_ARMED
 		      || status->arming_state == vehicle_status_s::ARMING_STATE_ARMED_ERROR);
 	bool old_failsafe = status->failsafe;
@@ -678,7 +679,6 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 	case commander_state_s::MAIN_STATE_MANUAL:
 	case commander_state_s::MAIN_STATE_RATTITUDE:
 	case commander_state_s::MAIN_STATE_STAB:
-    case commander_state_s::MAIN_STATE_TRANSITION_FTERO:
     case commander_state_s::MAIN_STATE_TRACTION_FTERO:
 	case commander_state_s::MAIN_STATE_ALTCTL:
 
@@ -736,6 +736,17 @@ bool set_nav_state(struct vehicle_status_s *status, struct commander_state_s *in
 		}
 
 		break;
+
+
+    case commander_state_s::MAIN_STATE_TRANSITION_FTERO:{
+       if(!status->is_rotary_wing){
+        status->nav_state = vehicle_status_s::NAVIGATION_STATE_TRACTION_FTERO;
+        }
+        else{
+           status->nav_state =vehicle_status_s::NAVIGATION_STATE_TRANSITION_FTERO;
+        }
+       }
+        break;
 
 	case commander_state_s::MAIN_STATE_POSCTL: {
 			const bool rc_lost = rc_loss_enabled && (status->rc_signal_lost || status_flags->rc_signal_lost_cmd);
