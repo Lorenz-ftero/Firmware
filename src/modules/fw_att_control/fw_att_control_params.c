@@ -72,6 +72,42 @@ PARAM_DEFINE_INT32(FW_TR_DIR, 0);
 PARAM_DEFINE_FLOAT(FW_TR_BANK, 1);
 
 /**
+ * Enable Full Automatic Mode
+ *
+ *
+ * @min 0
+ * @max 1
+ * @decimal 1
+ * @increment 0.1
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_EFAM, 0.f);
+
+/**
+ * Full Automatic Mode Throttle
+ *
+ *
+ * @min 0
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_FAMT, .7);
+
+/**
+ * Full Automatic Mode Elevator
+ *
+ *
+ * @min 0
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group FW Attitude Control
+ */
+PARAM_DEFINE_FLOAT(FW_TR_FAME, .7);
+
+/**
  * Enable Constant Bank Mode
  *
  *

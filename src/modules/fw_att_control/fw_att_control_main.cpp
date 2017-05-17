@@ -238,6 +238,9 @@ private:
                 float elevation_min;
                 float enable_constant_bank;
                 float bank_constant_bank;
+                float fam_enable;
+                float fam_throttle;
+                float fam_elevator;
 
 	}		_parameters;			/**< local copies of interesting parameters */
 
@@ -301,6 +304,9 @@ private:
                 param_t elevation_min;
                 param_t enable_constant_bank;
                 param_t bank_constant_bank;
+                param_t fam_enable;
+                param_t fam_throttle;
+                param_t fam_elevator;
 
 	}		_parameter_handles;		/**< handles for interesting parameters */
 
@@ -551,6 +557,9 @@ FixedwingAttitudeControl::FixedwingAttitudeControl() :
         _parameter_handles.elevation_min = param_find("FW_TR_SEL");
         _parameter_handles.enable_constant_bank = param_find("FW_TR_ECM");
         _parameter_handles.bank_constant_bank = param_find("FW_TR_ECMB");
+        _parameter_handles.fam_enable = param_find("FW_TR_EFAM");
+        _parameter_handles.fam_throttle = param_find("FW_TR_FAMT");
+        _parameter_handles.fam_elevator = param_find("FW_TR_FAME");
 
 	/* fetch initial parameter values */
 	parameters_update();
@@ -654,6 +663,9 @@ FixedwingAttitudeControl::parameters_update()
         param_get(_parameter_handles.elevation_min, &_parameters.elevation_min);
         param_get(_parameter_handles.enable_constant_bank, &_parameters.enable_constant_bank);
         param_get(_parameter_handles.bank_constant_bank, &_parameters.bank_constant_bank);
+        param_get(_parameter_handles.fam_enable, &_parameters.fam_enable);
+        param_get(_parameter_handles.fam_throttle, &_parameters.fam_throttle);
+        param_get(_parameter_handles.fam_elevator, &_parameters.fam_elevator);
 
 	/* pitch control parameters */
 	_pitch_ctrl.set_time_constant(_parameters.p_tc);
@@ -1013,7 +1025,7 @@ FixedwingAttitudeControl::task_main()
                         float center_dir = (_rc(0)*_rw(1)-_rc(1)*_rw(0)>0) ? 1:-1;
 
 
-                        _eta=_heading_gs+center_dir*(_ber_c+loiter_dir*_ber_ref);
+                        _eta=_heading_gs+center_dir*_ber_c+loiter_dir*_ber_ref;
 
                         if(_local_el_s<_parameters.elevation_min){
                                 _eta=_heading_gs;
@@ -1072,9 +1084,9 @@ FixedwingAttitudeControl::task_main()
                         _traction_status.param_BANK = _parameters.bank_angle;
                         _traction_status.param_DIR = _parameters.circle_dir;
                         _traction_status.param_SEL = _parameters.elevation_min;
-                        _traction_status.reserve_0 = 0.0f;
-                        _traction_status.reserve_1 = 0.0f;
-                        _traction_status.reserve_2 = 0.0f;
+                        _traction_status.reserve_0 = _parameters.fam_enable;
+                        _traction_status.reserve_1 = _parameters.fam_throttle;
+                        _traction_status.reserve_2 = _parameters.fam_elevator;
                         _traction_status.reserve_3 = 0.0f;
                         _traction_status.reserve_4 = 0.0f;
                         _traction_status.reserve_5 = 0.0f;
@@ -1313,6 +1325,9 @@ FixedwingAttitudeControl::task_main()
                                         }
                                         pitch_sp = 0;
                                         _att_sp.thrust = _manual.z;
+                                        if(_parameters.fam_enable > 0.5){
+                                                _att_sp.thrust = _parameters.fam_throttle;
+                                        }
                                         PX4_INFO("traction fw_att");
                                 }
 
@@ -1498,6 +1513,9 @@ FixedwingAttitudeControl::task_main()
                                 if(_vcontrol_mode.flag_control_traction_ftero_enabled){
                                         _actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
                                                         _parameters.trim_pitch;
+                                        if(_parameters.fam_enable){
+                                                _actuators.control[actuator_controls_s::INDEX_PITCH] = _parameters.fam_elevator;
+                                        }
                                 }
 
 			} else {
