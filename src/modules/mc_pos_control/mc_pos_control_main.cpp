@@ -281,6 +281,7 @@ private:
     float _pitch_transition_start;  // pitch angle at the start of transition (tailsitter)
     float _roll_transition_start; // roll angle at the start of transition (tailsitter)
     hrt_abstime _transition_start_ftero; //time when transition start
+    bool _roll_time_start;
 
     struct {
       float _pitch_transition_final;
@@ -1347,9 +1348,9 @@ MulticopterPositionControl::task_main()
 	_local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	_global_vel_sp_sub = orb_subscribe(ORB_ID(vehicle_global_velocity_setpoint));
 
-    params_ftero._pitch_transition_final=-0.5f;
-    params_ftero._roll_transition_final=1.0f;
-    params_ftero._thrust_transition_final=0.9f;
+    params_ftero._pitch_transition_final=-0.3f;
+    params_ftero._roll_transition_final=-0.4f; /*positiv, right roll, negativ left)*/
+    params_ftero._thrust_transition_final=1.0f;
 
 
 
@@ -2162,9 +2163,9 @@ MulticopterPositionControl::task_main()
             if(!_control_mode.flag_control_transition_ftero_enabled){
                 _yaw_transition_start = _att_sp.yaw_body;
                 _pitch_transition_start = _att_sp.pitch_body;
-                _roll_transition_start = _att_sp.roll_body;
                 _thrust_transition_start = _att_sp.thrust;
                 _transition_start_ftero = hrt_absolute_time();
+                _roll_time_start= false;
 
             }
 
@@ -2185,19 +2186,27 @@ MulticopterPositionControl::task_main()
                     /*ceate time dependant pitch angle set point, for first transition*/
                     _att_sp.pitch_body = _att_sp.pitch_body+_pitch_transition_start	+ (params_ftero._pitch_transition_final - _pitch_transition_start) *
                                 elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
-                    /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);
-*/
+                    /*_att_sp.pitch_body = math::constrain(_att_sp.pitch_body , params_ftero._pitch_transition_final, _pitch_transition_start);*/
+
                     _att_sp.thrust = _thrust_transition_start+(params_ftero._thrust_transition_final-_thrust_transition_start)*
                                 elapsed_time_transition/ (_params.transition_duration_ftero*1000000.0f);
 
 
+                    if(!_roll_time_start){
+                            _roll_transition_start = _att_sp.roll_body;
+                    }
 
-                    /* if(elapsed_time_transition>3.0f*1000000.0f){
 
-                    _att_sp.roll_body = _att_sp.roll_body+_roll_transition_start +(params_ftero._roll_transition_final - _roll_transition_start)*
+
+
+                         if(elapsed_time_transition>3.0f*1000000.0f){
+                             _roll_time_start=true;
+                             /* as we are in mc mode roll has to be mapped to the jaw setpoint)*/
+
+                           _att_sp.yaw_body = _att_sp.yaw_body+_roll_transition_start +(params_ftero._roll_transition_final - _roll_transition_start)*
                                 elapsed_time_transition/ (_params.transition_duration_ftero* 1000000.0f);
-                    _att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);
-                    }*/
+                            /*_att_sp.roll_body = math::constrain(_att_sp.roll_body, params_ftero._roll_transition_final,_roll_transition_start);*/
+                         }
 
                     }
 
