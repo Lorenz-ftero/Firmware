@@ -921,7 +921,7 @@ FixedwingAttitudeControl::task_main()
                         _K_L1 = 4 * _parameters.damping_l1*_parameters.damping_l1;
 
                         math::Vector<3> _rc;
-                        _rc(0)=cos(_parameters.center_elevation)*sin(_parameters.center_azimuth);
+                        _rc(0)=cos(_paramet_roll_sers.center_elevation)*sin(_parameters.center_azimuth);
                         _rc(1)=cos(_parameters.center_elevation)*cos(_parameters.center_azimuth);
                         _rc(2)=sin(_parameters.center_elevation);
                         _rc.normalize();
