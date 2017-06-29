@@ -1,0 +1,16 @@
+#
+#!nsh
+#
+# @name Dominici
+#
+# @type Flying Wing
+#
+# @maintainer Dominic Keidel
+#
+
+sh /etc/init.d/rc.fw_defaults
+
+set MIXER dominici
+set PWM_OUT 1
+set MIXER_AUX dominici
+
