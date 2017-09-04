@@ -99,13 +99,13 @@ PARAM_DEFINE_FLOAT(FW_TR_FAMT, .7);
  * Full Automatic Mode Elevator
  *
  *
- * @min 0
+ * @min -1
  * @max 1
  * @decimal 2
  * @increment 0.01
  * @group FW Attitude Control
  */
-PARAM_DEFINE_FLOAT(FW_TR_FAME, .7);
+PARAM_DEFINE_FLOAT(FW_TR_FAME, -.1);
 
 /**
  * Enable Constant Bank Mode
