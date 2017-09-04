@@ -1327,10 +1327,11 @@ FixedwingAttitudeControl::task_main()
                                         pitch_sp = 0;
                                         _att_sp.thrust = _manual.z;
                                         if(_parameters.fam_enable > 0.5f){
-                                                _att_sp.thrust = _parameters.fam_throttle;
+                                                _att_sp.pitch_body = _parameters.fam_elevator;
                                         }
                                         PX4_INFO("traction fw_att");
                                 }
+
 
                 if(_vcontrol_mode.flag_control_transition_ftero_enabled){
                     pitch_sp = 0.3;
@@ -1514,8 +1515,9 @@ FixedwingAttitudeControl::task_main()
                                 if(_vcontrol_mode.flag_control_traction_ftero_enabled){
                                         _actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
                                                         _parameters.trim_pitch;
+                                        _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
                                         if(_parameters.fam_enable > 0.5f){
-                                                _actuators.control[actuator_controls_s::INDEX_PITCH] = _parameters.fam_elevator;
+                                                _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _parameters.fam_throttle;
                                         }
                                 }
 
