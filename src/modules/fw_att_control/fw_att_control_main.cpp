@@ -998,6 +998,7 @@ FixedwingAttitudeControl::task_main()
 
                         //float cos_ang2=_rc(2);
                         //cos_ang2=math::constrain(cos_ang2, -1.0f, 1.0f);
+                        //testcomments
                         _PC_arc=M_PI_2_F-_parameters.center_elevation;//acosf(cos_ang2);
 
                         //float cos_ang3=_rw_unit(2);
