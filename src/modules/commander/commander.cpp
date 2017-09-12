@@ -321,7 +321,7 @@ int commander_main(int argc, char *argv[])
 		daemon_task = px4_task_spawn_cmd("commander",
 					     SCHED_DEFAULT,
 					     SCHED_PRIORITY_DEFAULT + 40,
-					     3200,
+                         3500,
 					     commander_thread_main,
 					     (char * const *)&argv[0]);
 
