@@ -1513,11 +1513,14 @@ FixedwingAttitudeControl::task_main()
 				}
 
                                 if(_vcontrol_mode.flag_control_traction_ftero_enabled){
-                                        _actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
-                                                        _parameters.trim_pitch;
-                                        _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
                                         if(_parameters.fam_enable > 0.5f){
                                                 _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _parameters.fam_throttle;
+                                        }
+                                        else{
+
+                                            _actuators.control[actuator_controls_s::INDEX_PITCH] = -_manual.x * _parameters.man_pitch_scale +
+                                                            _parameters.trim_pitch;
+                                            _actuators.control[actuator_controls_s::INDEX_THROTTLE] = _manual.z;
                                         }
                                 }
 
